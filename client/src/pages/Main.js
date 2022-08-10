@@ -9,7 +9,8 @@ import { StyledMain } from "../core-ui/pages/Main.style";
 
 const Main = () => {
   const [isShown,setIsShown] = useState();
-  const[clickedChat, setClickedChat] = useState(null);
+  const[clickedChat, setClickedChat] = useState(null); //room id
+  const[type,setType] = useState(null) // group or single
   
   return (
 
@@ -18,8 +19,8 @@ const Main = () => {
     <NotificationModal />
 
     
-    <Chatbox setClickedChat={setClickedChat} clickedChat={clickedChat}/>
-    <Messagebox clickedChat={clickedChat} />
+    <Chatbox setClickedChat={setClickedChat} clickedChat={clickedChat} setType={setType}/>
+    <Messagebox clickedChat={clickedChat} type={type}/>
     
     
     </StyledMain>

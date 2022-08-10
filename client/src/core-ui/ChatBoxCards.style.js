@@ -1,7 +1,8 @@
 import styled from "styled-components";
 
 export const StyledChatBoxCards = styled.div`
-    padding: 20px;
+    position: relative;
+    padding: 28px 20px 20px 20px;
     width: 100%;
     display: flex;
     align-items: center;
@@ -29,5 +30,24 @@ export const StyledChatBoxCards = styled.div`
         font-size: 18px;
         color: #6C5CE7;
     }
+
+    .time{
+        position: absolute;
+        font-size: 14px;
+        color : rgba(108,92,231,.75);
+        top: 4px;
+        right: 24px;
+    }
+
+    .notif{
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         font-size: 14px;
+         padding: 12px 19px ;
+         border-radius: 100vh;
+         background-color: #67FF92;
+    }
+
 
 `

@@ -29,11 +29,17 @@ const Message = sequelize.define("message", {
     },
     isRead : {
         type: DataTypes.STRING,
-        allowNull:false
+        allowNull:false,
+        defaultValue : "false"
     },
     isForwarded : {
         type : DataTypes.STRING,
         allowNull: false
+    },
+    isLiked : {
+        type : DataTypes.STRING,
+        allowNull : false,
+        defaultValue:"false"
     },
 
     refering : {

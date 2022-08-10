@@ -16,6 +16,13 @@ export const StyledMessageBox = styled.div`
         font-size: 28px;
      }
 
+     .dynamic{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%,-50%);
+     }
+
      header {
         display: flex;
         flex-direction: row;
@@ -30,6 +37,7 @@ export const StyledMessageBox = styled.div`
             height: 48px;
             border: 1px solid transparent;
             border-radius:100vh;
+            object-fit: cover;
             background-color: rgba(217,217,217,.3);
             margin-right: 36px;
 
@@ -68,6 +76,8 @@ export const StyledMessageBox = styled.div`
 
      .msg-section{
         flex:1;
+        position: relative;
+        max-height: 498px;
         overflow-y: scroll;
         -ms-overflow-style: none;  
          scrollbar-width: none;  

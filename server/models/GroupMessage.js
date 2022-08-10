@@ -33,8 +33,10 @@ const GroupMessage = sequelize.define("group_message", {
         allowNull: false
     },
     isRead : {
-        type: DataTypes.STRING,
-        allowNull:false
+        type : DataTypes.STRING,
+        allowNull: false,
+        defaultValue : "false"
+
     },
     refering : {
         type : DataTypes.INTEGER

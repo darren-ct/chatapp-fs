@@ -1,8 +1,7 @@
+const { Op } = require("sequelize");
+
 const Message = require("../models/Message");
 const GroupMessage = require("../models/GroupMessage");
-
-const Chatroom = require("../models/ChatRoom");
-const GroupRoom = require("../models/GroupRoom");
 
 const UserChat = require("../models/UserChat");
 const UserGroup = require("../models/UserGroup");
@@ -14,35 +13,44 @@ const {sendErr} = require("../helper/other");
 
 
 const getMessages = async(req,res) => {
-    const roomId = req.body.roomId;
-    const friendId = req.body.friendId;
-    const isGroup = req.body.isGroup;
+    const roomId = req.query.roomId;
+    const isGroup = req.query.isGroup;
     const userId = req.user.id;
    
+        let messageQuery = "";
+        let profileQuery = "";
 
-          if(!isGroup){
 
-         const messageQuery = `
-         SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image
-         HOUR(message.createdAt) AS hour,
-         MINUTE(message.createdAt) AS minute,
-         DAY(message.createdAt) AS day,
-         MONTH(message.createdAt) AS month,
-         YEAR(message.createdAt) AS year,
+      
+        try {
+
+
+          if(isGroup !== "true"){
+
+            const friend = await UserChat.findOne({
+              where : {room_id:roomId,user_id:userId},
+              attributes : ["friend_id"]
+            });
+
+            const friendId = friend.friend_id;
+
+          messageQuery = `
+         SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image, isLiked,
+         DAYNAME(message.createdAt) AS day,
+         DATE(message.createdAt) AS date,
+         TIME(message.createdAt) AS time
          FROM message INNER JOIN profile
          ON message.sender_id = profile.user_id AND message.room_id = ${roomId} AND message.owner_id = ${userId}
-         INNER JOIN user_friend
+         LEFT JOIN user_friend
          ON user_friend.friend_id = profile.user_id AND user_friend.user_id = ${userId}
+         ORDER BY message.createdAt ASC
 
          `;
 
-          const profileQuery = `
-          SELECT user_friend.display_name, profile_image, isOnline , updatedAt
-          HOUR(last_online) AS hour,
-          MINUTE(last_online) AS minute,
-          DAY(last_online) AS day,
-          MONTH(last_online) AS month,
-          YEAR(last_online) AS year,
+          profileQuery = `
+          SELECT user_friend.display_name, profile_image, isOnline , 
+          DATE(last_online) AS date,
+          TIME(last_online) AS time
           FROM profile INNER JOIN user_friend 
           ON user_friend.friend_id = profile.user_id 
           AND user_friend.friend_id = ${friendId} AND user_friend.user_id = ${userId}
@@ -50,21 +58,20 @@ const getMessages = async(req,res) => {
 
         } else {
 
-        const messageQuery = `
-        SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image
-        HOUR(createdAt) AS hour,
-        MINUTE(createdAt) AS minute,
-        DAY(createdAt) AS day,
-        MONTH(createdAt) AS month,
-        YEAR(createdAt) AS year,
+         messageQuery = `
+        SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image,
+        DATE(createdAt) AS date,
+        TIME(createdAt) AS time,
+        DAY(createdAt) AS day
         FROM group_message INNER JOIN profile
-        ON group_message.sender_id = profile.user_id AND group_message.message.room_id = ${roomId} AND group_message.owner_id = ${userId}
-        INNER JOIN user_friend
+        ON group_message.sender_id = profile.user_id AND group_message.room_id = ${roomId} AND group_message.owner_id = ${userId}
+        LEFT JOIN user_friend
         ON user_friend.friend_id = profile.user_id AND user_friend.user_id = ${userId}
+        ORDER BY group_message.createdAt ASC
     
         `;
 
-        const profileQuery = `
+        profileQuery = `
         SELECT group_name, image
         FROM group_room WHERE
         room_id = ${roomId}
@@ -72,7 +79,7 @@ const getMessages = async(req,res) => {
 
         }
 
-    try {
+    
         const messages = await sequelize.query(
            messageQuery , {type:QueryTypes.SELECT}
         );
@@ -81,33 +88,91 @@ const getMessages = async(req,res) => {
           profileQuery, {type:QueryTypes.SELECT}
         );
 
+        if(isGroup !== "true"){
+
         return res.status(201).send({
            status : "Success",
            data : {
-                profile : profile,
-                messages : messages
+                profile : profile.map(item => {return {...item,profile_image : item.profile_image ? process.env.SERVER_URL + item.profile_image : null}}),
+                messages : messages.map(item => {return {...item,profile_image : item.profile_image ? process.env.SERVER_URL + item.profile_image : null}})
            }
-        })
+        }) 
+
+        } else {
+
+
+          return res.status(201).send({
+            status : "Success",
+            data : {
+                 profile : profile.map(item => {return {...item,image : item.image ? process.env.SERVER_URL + item.image : null}}),
+                 messages : messages.map(item => {return {...item,profile_image : item.profile_image ? process.env.SERVER_URL + item.profile_image : null}})
+            }
+         }) 
+
+        };
+
 
     }catch(err){
+       console.log(err);
         sendErr("Server Error",res)
     }
 
 };
 
+const likeMessage = async(req,res) => {
+const messageId = req.params.id;
+
+       try {
+
+        const message = await Message.findOne({
+          attributes : ["isLiked"]
+        });
+
+        const newValue = message.isLiked === "false" ? "true" : "false";
+
+        console.log(message.isLiked)
+        console.log(newValue)
+
+        await Message.update({isLiked:newValue},{where : {
+              [Op.or] : [
+                {message_id : messageId},
+                {refering : messageId}
+              ]
+        }});
+
+        return res.status(201).send({
+          status : "Success"
+        });
+
+       } catch(err) {
+
+        console.log(err)
+        sendErr("Server error",res);
+
+       };
+}
 // Group
 const sendMessage = async(req,res) => {
       const userId = req.user.id;
-      const {isGroup,friendId,roomId,message,replying,isForwarded} = req.body;
+      const {isGroup,roomId,message,replying,isForwarded} = req.body;
 
 
       try {
 
        
-      if(!isGroup){
+      if(isGroup !== "true"){
+      
 
-        // check 
-        const isConnected = await UserChat.find({
+        // find friend id
+          const friend = await UserChat.findOne({
+            where : {room_id:roomId,user_id:userId},
+            attributes : ["friend_id"]
+          });
+
+          const friendId = friend.friend_id;
+
+        // check hak
+        const isConnected = await UserChat.findAll({
           where : {user_id:userId,room_id:roomId,friend_id:friendId}
         })
 
@@ -116,8 +181,8 @@ const sendMessage = async(req,res) => {
         }
 
 
-        // send message
-        const connected = await UserChat.find({
+        // check opposition
+        const connected = await UserChat.findAll({
           where : {user_id:friendId,room_id:roomId,friend_id:userId}
         });
 
@@ -129,15 +194,14 @@ const sendMessage = async(req,res) => {
           })
         };
 
-
-       await Message.create({
+      // Create 2 messages
+      const newMsg =  await Message.create({
         room_id : roomId,
         sender_id : userId,
         owner_id : userId,
         body :  message ,
         replying:replying,
-        isForwarded:isForwarded,
-        isRead:"true"
+        isForwarded:isForwarded ? isForwarded : "false",
       });
 
       await Message.create({
@@ -146,16 +210,16 @@ const sendMessage = async(req,res) => {
         owner_id : friendId,
         body :  message ,
         replying:replying,
-        isForwarded:isForwarded,
-        isRead: "false",
+        refering:newMsg.message_id,
+        isForwarded:isForwarded ? isForwarded : "false"
       });
 
       
 
       } else {
 
-        // check
-        const isConnected = await UserGroup.find({
+        // check hak
+        const isConnected = await UserGroup.findAll({
           where : {user_id:userId,room_id:roomId,status:"Accepted"}
         });
 
@@ -170,7 +234,7 @@ const sendMessage = async(req,res) => {
             owner_id : userId,
             body :  message ,
             replying:replying,
-            isForwarded:isForwarded
+            isForwarded:isForwarded ? isForwarded : "false"
           });
 
         //   Loop it
@@ -191,7 +255,7 @@ const sendMessage = async(req,res) => {
                 owner_id : member.user_id,
                 body :  message ,
                 replying:replying,
-                isForwarded:isForwarded,
+                isForwarded:isForwarded ? isForwarded : "false",
                 refering : message.message_id
               });
 
@@ -205,6 +269,7 @@ const sendMessage = async(req,res) => {
         });
   
       } catch(err) {
+        console.log(err)
         return sendErr("Server error",res)
       };
 
@@ -303,3 +368,4 @@ module.exports.sendMessage = sendMessage;
 module.exports.deleteMessage = deleteMessage;
 module.exports.unsendMessage = unsendMessage;
 module.exports.clearMessages = clearMessages;
+module.exports.likeMessage = likeMessage;

@@ -17,8 +17,9 @@ const getChats = async(req,res) => {
     if(!isPinned){
 
      queryChat = `
-    SELECT profile_image, user_friend.display_name, user.user_id ,  chat_room.room_id, isPinned ,COUNT(message.room_id) ,MAX(message.createdAt) AS last_time,
-    chat_room.updatedAt
+    SELECT profile_image, user_friend.display_name, user.user_id ,  chat_room.room_id, isPinned ,COUNT(message.room_id) AS notif , 
+    TIME(MAX(message.createdAt)) AS last_time, DATE(MAX(message.createdAt)) AS last_date
+    
    
 
     FROM user_chat INNER JOIN chat_room
@@ -35,21 +36,18 @@ const getChats = async(req,res) => {
     
 
     INNER JOIN message
-    ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false'
+    ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false' 
 
     GROUP BY message.room_id
     ORDER BY isPinned, last_time DESC
     `;
 
-    // HOUR(chat_room.updatedAt) AS hour,
-    // MINUTE(chat_room.updatedAt) AS minute,
-    // DAY(chat_room.updatedAt) AS day,
-    // MONTH(chat_room.updatedAt) AS month,
-    // YEAR(chat_room.updatedAt) AS year
+   
 
      queryGroup = `
-    SELECT image, group_name , group_room.room_id, isPinned ,COUNT(group_message.room_id),MAX(group_message.createdAt) AS last_time,
-    group_room.updatedAt
+    SELECT image, group_name , group_room.room_id, isPinned ,COUNT(group_message.room_id) AS notif,
+    TIME(MAX(group_message.createdAt)) AS last_time, DATE(MAX(group_message.createdAt)) AS last_date
+ 
     
     FROM user_group INNER JOIN group_room
     ON user_group.room_id = group_room.room_id AND user_group.user_id = ${userID}
@@ -61,63 +59,40 @@ const getChats = async(req,res) => {
     ORDER BY isPinned, last_time DESC
     `;
 
-    // HOUR(group_room.updatedAt) AS hour,
-    // MINUTE(group_room.updatedAt) AS minute,
-    // DAY(group_room.updatedAt) AS day,
-    // MONTH(group_room.updatedAt) AS month,
-    // YEAR(group_room.updatedAt) AS year
-
-    // const lastChatQuery = `
-    // SELECT body
-    // FROM user_chat INNER JOIN message
-    // ON user_chat.room_id = message.room_id 
-    // AND user_chat.user_id = ${userID} AND message.owner_id = ${userID}
-    // ORDER BY DESC
-    // GROUP BY message.room_id
-    // ORDER BY isPinned,group_room.updatedAt DESC
-
-    // `
-
-    // const lastGroupQuery = `
-    // SELECT body
-    // FROM user_group INNER JOIN group_message
-    // ON user_group.room_id = group_message.room_id 
-    // AND user_group.user_id = ${userID} AND group_message.owner_id = ${userID}
-
-    // GROUP BY group_message.room_id
-    // ORDER BY group_message.createdAt DESC
-    // `
+   
     } else {
 
        queryChat = `
-    SELECT profile_image, user_friend.display_name, user.user_id ,  chat_room.room_id, isPinned ,COUNT(message.room_id) ,MAX(message.createdAt) AS last_time,
-    chat_room.updatedAt
+       SELECT profile_image, user_friend.display_name, user.user_id ,  chat_room.room_id ,COUNT(message.room_id) AS notif , 
+       TIME(MAX(message.createdAt)) AS last_time, DATE(MAX(message.createdAt)) AS last_date
+       
+      
    
-
-    FROM user_chat INNER JOIN chat_room
-    ON user_chat.room_id = chat_room.room_id AND user_chat.user_id = ${userID} AND isPinned = 'true'
-
-    INNER JOIN user
-    ON user_chat.friend_id = user.user_id
-
-    INNER JOIN profile
-    ON user.user_id = profile.user_id
-
-    INNER JOIN user_friend
-    ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID}
-    
-
-    INNER JOIN message
-    ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false'
-
-    GROUP BY message.room_id
-    ORDER BY isPinned, last_time DESC
+       FROM user_chat INNER JOIN chat_room
+       ON user_chat.room_id = chat_room.room_id AND user_chat.user_id = ${userID} AND isPinned = 'true'
+   
+       INNER JOIN user
+       ON user_chat.friend_id = user.user_id
+   
+       INNER JOIN profile
+       ON user.user_id = profile.user_id
+   
+       INNER JOIN user_friend
+       ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID}
+       
+   
+       INNER JOIN message
+       ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false' 
+   
+       GROUP BY message.room_id
+       ORDER BY isPinned, last_time DESC
     `;
 
     queryGroup = `
     
-    SELECT image, group_name , group_room.room_id, isPinned ,COUNT(group_message.room_id),MAX(group_message.createdAt) AS last_time,
-    group_room.updatedAt
+    SELECT image, group_name , group_room.room_id ,COUNT(group_message.room_id) AS notif,
+    TIME(MAX(group_message.createdAt)) AS last_time, DATE(MAX(group_message.createdAt)) AS last_date
+ 
     
     FROM user_group INNER JOIN group_room
     ON user_group.room_id = group_room.room_id AND user_group.user_id = ${userID} AND isPinned='true'
@@ -132,19 +107,15 @@ const getChats = async(req,res) => {
     }
 
     try {
-        const chats = await sequelize.query(queryChat,{type:QueryTypes.SELECT});
-        // const recentList =  await sequelize.query(lastChatQuery,{type:QueryTypes.SELECT});
-
-        const groupChats = await sequelize.query(queryGroup, {type:QueryTypes.SELECT});
-        // const recentGroupList  =  await sequelize.query(lastGroupQuery,{type:QueryTypes.SELECT})
-    
+        let chats = await sequelize.query(queryChat,{type:QueryTypes.SELECT});
+        let groupChats = await sequelize.query(queryGroup, {type:QueryTypes.SELECT});
+       
         return res.status(201).send({
             status: "Success",
             data : {
-                chats : chats,
-                // last_sent_chat : recentList,
-                groupChats : groupChats,
-                // last_sent_group_chat : recentGroupList,
+                chats : chats.map(chat => {return {...chat,type:"single",profile_image : chat.profile_image ? process.env.SERVER_URL + chat.profile_image : null}}),
+                groupChats : groupChats.map(group => {return {...group,type:"group",image : group.image ? process.env.SERVER_URL + group.profile_image : null}}),
+                
             }
         });
     
@@ -162,17 +133,38 @@ const {friendId} = req.body;
 
 try {
 
-        const room = await ChatRoom.create();
+    // Check does previous room exist, if yes use that room
+       const alreadyRoomed = await UserChat.findOne({
+        where : {
+             user_id : userId,
+             friend_id : friendId
+        },
+        attributes : ["room_id"]
+       })
+
+       if(alreadyRoomed){
+
+                   // send
+         return res.status(201).send({
+            status : "Success",
+            id : alreadyRoomed.room_id
+         })
+       };
+
+     // If dont, make new room
+        const newRoom = await ChatRoom.create();
 
         await UserChat.create({
             user_id : userId,
-            room_id : room.room_id,
+            room_id : newRoom.room_id,
             friend_id : friendId
          });
 
-    return res.send({
-        status : "Success"
-    })
+                //send
+         return res.send({
+              status : "Success",
+              id : newRoom.room_id
+         });
 
 
 } catch(err) {

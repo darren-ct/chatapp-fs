@@ -14,23 +14,28 @@ import { TailSpin } from "react-loader-spinner";
 
 import api from "../connection";
 import Button from "./basic/Button";
+import { getChatTime } from "../helpers";
 
 
 export const ChatContext = createContext(null)
 
-const Chatbox = ({clickedChat,setClickedChat}) => {
+const Chatbox = ({setClickedChat,setType}) => {
   const{user,token}=useContext(AppContext);
   const id = user.user_id;
 
-  // 
+  // States
+          // Header
   const [profile,setProfile] = useState("");
-  const [filter,setFilter] = useState("")
+
+          // Filter and Search
+  const [filter,setFilter] = useState("pesan")
   const [search,setSearch] = useState("");
+          
+          // List
   const[list,setList] = useState([]);
   const[loadingList,setLoadingList] = useState(false);
 
- 
-
+          // Sidebar and Drop
   const[sidebar,setSidebar] = useState(false);
   const[sidebarContent,setSidebarContent] = useState(null);
   const[showAddDrop,setShowAddDrop] = useState(false);
@@ -45,11 +50,9 @@ const Chatbox = ({clickedChat,setClickedChat}) => {
 
   useEffect(()=>{
 
-    
-
     switch(filter){
 
-    case "pesan" || "":
+    case "pesan":
            getChats()
     break;
     case "teman":
@@ -79,22 +82,28 @@ const Chatbox = ({clickedChat,setClickedChat}) => {
 
   
   // Functions
+            //  Tampilan
   const renderBox = (item) => {
 
     switch(filter){
+           
 
       case "pesan" || "":
+
             return (
-            <div>
+            <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType(item.type)}}>
             <StyledChatBoxCards>
-                
+                  <img src={item.profile_image} />
+                  <div className="name">{item.display_name}</div>
+                  <div className="time">{getChatTime(item.last_date,item.last_time)}</div>
+                  <div className="notif">{item.notif}</div>
             </StyledChatBoxCards>
             </div>
                    )
       break;
       case "teman":
             return (
-            <div key={item.friend_id}>
+            <div key={item.friend_id} onClick={()=>{startChat(item.friend_id);setType("single")}}>
               <StyledChatBoxCards>
                   <img src={item.profile_image ? item.profile_image : ""}/>
                   <div className="name">{item.display_name}</div>
@@ -125,7 +134,7 @@ const Chatbox = ({clickedChat,setClickedChat}) => {
       break;
       case "pin":
              return (             
-               <div>
+              <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType(item.type)}}>
               <StyledChatBoxCards>
   
   
@@ -134,7 +143,7 @@ const Chatbox = ({clickedChat,setClickedChat}) => {
       break; 
       case "grup":
              return (             
-               <div key={item.room_id}>
+               <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType("group")}}>
               <StyledChatBoxCards>
                    <img src={item.image} />
                    <div className="name">{item.group_name}</div>
@@ -319,8 +328,30 @@ const Chatbox = ({clickedChat,setClickedChat}) => {
     console.log(err);
 
  }
-  };
+  }; 
+              // Start Chat
+  const startChat = async(friendId) => {
+    try {
+      
 
+     const res = await api.post("/chat",  {friendId:friendId} ,{
+     headers: {'Authorization':`Bearer ${token}`}
+     });
+
+     const payload = res.data;
+     const roomId = payload.id;
+  
+     setClickedChat(roomId);
+
+
+ } catch (err) {
+  
+    console.log(err);
+
+ }
+  }
+
+             // Form
   const onChange = (e) => {
     setFilter(e.target.value);
   }
@@ -330,7 +361,7 @@ const Chatbox = ({clickedChat,setClickedChat}) => {
   }
 
 
-        // toggle
+        // Toggling
   const toggleAddDrop = () => {
       setShowOtherDrop(false)
       setShowAddDrop(prev => !prev)

@@ -180,7 +180,7 @@ const getBirthdays = async(req,res) => {
     SELECT friend_id , profile_image , user_friend.display_name , birth_date
     FROM user_friend INNER JOIN profile
     ON profile.user_id = user_friend.friend_id 
-    AND user_friend.user_id = ${userId}`;  // pikirkan logic spy ambil yg recent 3 days
+    AND user_friend.user_id = ${userId}`;  // pikirkan logic spy ambil yg recent 3 days // PAKE DATE DIFF 
 
     const birthdays = await sequelize.query(query,{type:QueryTypes.SELECT});
 
