@@ -2,6 +2,7 @@ import styled from "styled-components";
 
 export const StyledChatBox = styled.div`
      position: relative;
+     height: 100vh;
      display: flex;
      flex-direction: column;
      width: 420px;

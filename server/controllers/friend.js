@@ -14,7 +14,8 @@ const getUsers = async(req,res) => {
     ON user.user_id = profile.user_id AND user.user_id <> ${userId}
     LEFT JOIN user_friend
     ON user.user_id = user_friend.friend_id
-    AND user_friend.user_id = ${userId};
+    AND user_friend.user_id = ${userId}
+    ORDER BY user.username ASC
     `;
 
     try {
@@ -46,12 +47,14 @@ const getFriends = async(req,res) => {
  FROM user_friend INNER JOIN profile
  ON profile.user_id = user_friend.friend_id 
  AND user_friend.user_id = ${userId}
+ ORDER BY user_friend.display_name ASC
  ` } else {
     query = `
     SELECT friend_id , profile_image , user_friend.display_name 
     FROM user_friend INNER JOIN profile
     ON profile.user_id = user_friend.friend_id 
     AND user_friend.user_id = ${userId} AND isBlock = 'true'
+    ORDER BY user_friend.display_name ASC
     `
  };
 

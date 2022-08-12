@@ -3,10 +3,10 @@ const router = express.Router();
 const {uploadFile} = require("../middleware/uploadFile");
 
 const { unsendMessage } = require("../controllers/message");
-const { getGroups, getInvitations,sendInvitation } = require("../controllers/group");
+const { getGroups, getInvitations,sendInvitation,getMembers, getNonMembers } = require("../controllers/group");
 const { getUsers,getFriends,addFriend,changeDisplay,blockFriend,unblockFriend,getBirthdays } = require("../controllers/friend");
 const { getChats } = require("../controllers/chat");
-const { getProfile, getMyProfile, editMyProfile} = require("../controllers/profile");
+const { getProfile, getMyProfile, editMyProfile,editProfile} = require("../controllers/profile");
 
 
 
@@ -22,6 +22,8 @@ router.get("/groups", getGroups) // see group list
 router.use("/group", require("./groups/group"));
 router.get("/invitations", getInvitations)       // invitation list
 router.post("/invitation",sendInvitation)       // invite friend
+router.get("/members/:id", getMembers )
+router.get("/nonmembers/:id",getNonMembers)
 router.use("/member", require("./members/member"))
 
 
@@ -43,6 +45,7 @@ router.get("/birthdays",getBirthdays) // get friends birthday
 
 // Profile Related
 router.get("/profile/:id",getProfile);
+router.put("/profile/:id",editProfile)
 router.get("/myprofile",getMyProfile);
 router.put("/myprofile", uploadFile("image"), editMyProfile);
 

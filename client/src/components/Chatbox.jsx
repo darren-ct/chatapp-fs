@@ -1,8 +1,10 @@
-import { useState,useEffect,useContext, createContext} from "react";
+import { useState,useEffect,useContext,createContext,useLayoutEffect} from "react";
 import { AppContext } from "../App";
 
 import { StyledChatBox } from "../core-ui/ChatBox.style"
 import Dropdown from "../components/advanced/Dropdown";
+import { chatDropdown, friendsDropdown } from "../helpers/variables";
+import { addDropdown,otherDropdown } from "../helpers/variables";
 import Sidebar from "./Sidebar";
 
 
@@ -20,8 +22,7 @@ import { getChatTime } from "../helpers";
 export const ChatContext = createContext(null)
 
 const Chatbox = ({setClickedChat,setType}) => {
-  const{user,token}=useContext(AppContext);
-  const id = user.user_id;
+  const{token}=useContext(AppContext);
 
   // States
           // Header
@@ -38,6 +39,7 @@ const Chatbox = ({setClickedChat,setType}) => {
           // Sidebar and Drop
   const[sidebar,setSidebar] = useState(false);
   const[sidebarContent,setSidebarContent] = useState(null);
+  
   const[showAddDrop,setShowAddDrop] = useState(false);
   const[showOtherDrop,setShowOtherDrop] = useState(false);
 
@@ -48,7 +50,7 @@ const Chatbox = ({setClickedChat,setType}) => {
   },[]);
 
 
-  useEffect(()=>{
+  useLayoutEffect(()=>{
 
     switch(filter){
 
@@ -88,11 +90,12 @@ const Chatbox = ({setClickedChat,setType}) => {
     switch(filter){
            
 
-      case "pesan" || "":
+      case "pesan" :
 
             return (
             <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType(item.type)}}>
             <StyledChatBoxCards>
+            <Dropdown items={chatDropdown} roomId={item.room_id}/>
                   <img src={item.profile_image} />
                   <div className="name">{item.display_name}</div>
                   <div className="time">{getChatTime(item.last_date,item.last_time)}</div>
@@ -101,16 +104,22 @@ const Chatbox = ({setClickedChat,setType}) => {
             </div>
                    )
       break;
+
+
       case "teman":
             return (
             <div key={item.friend_id} onClick={()=>{startChat(item.friend_id);setType("single")}}>
+              
               <StyledChatBoxCards>
+                  <Dropdown items={friendsDropdown} friendId={item.friend_id} />
                   <img src={item.profile_image ? item.profile_image : ""}/>
                   <div className="name">{item.display_name}</div>
               </StyledChatBoxCards>
             </div>
             )
       break; 
+
+
       case "blokiran":
              return (
               <div key={item.friend_id}>
@@ -132,15 +141,20 @@ const Chatbox = ({setClickedChat,setType}) => {
             </div>
              )
       break;
+
+
       case "pin":
              return (             
               <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType(item.type)}}>
-              <StyledChatBoxCards>
+                   <StyledChatBoxCards>
+                   <Dropdown items={chatDropdown} roomId={item.room_id}/>
   
   
-              </StyledChatBoxCards>
+                   </StyledChatBoxCards>
               </div>)
       break; 
+
+
       case "grup":
              return (             
                <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType("group")}}>
@@ -150,6 +164,8 @@ const Chatbox = ({setClickedChat,setType}) => {
               </StyledChatBoxCards>
               </div>)
       break;
+
+
       case "undangan":
              return (              
              <div key={item.room_id}>
@@ -173,13 +189,7 @@ const Chatbox = ({setClickedChat,setType}) => {
         
   
       default:
-              return (              
-              <div>
-                <StyledChatBoxCards>
-    
-    
-                </StyledChatBoxCards>
-              </div>)
+              return ""
       }
 
   };
@@ -200,10 +210,14 @@ const Chatbox = ({setClickedChat,setType}) => {
   }
 
   const getChats = async() => {
-      try {
+      try { 
+        setLoadingList(true);
+
            const res = await api.get("/chats",{
           headers: {'Authorization':`Bearer ${token}`}
           });
+
+        setLoadingList(false);
 
           const payload = res.data;
           const chats = payload.data.chats;
@@ -270,9 +284,15 @@ const Chatbox = ({setClickedChat,setType}) => {
 
   const getPins = async() => {
     try {
+
+      setLoadingList(true);
+
       const res = await api.get("/chats?isPinned=true",{
      headers: {'Authorization':`Bearer ${token}`}
      });
+
+
+     setLoadingList(false);
 
      const payload = res.data;
      const chats = payload.data.chats;
@@ -291,9 +311,13 @@ const Chatbox = ({setClickedChat,setType}) => {
 
   const getGroups = async() => {
     try {
+      setLoadingList(true);
+
       const res = await api.get("/groups",{
      headers: {'Authorization':`Bearer ${token}`}
      });
+
+     setLoadingList(false);
 
      const payload = res.data;
      const groups = payload.data.groups;
@@ -311,9 +335,13 @@ const Chatbox = ({setClickedChat,setType}) => {
 
   const getInvitations = async() => {
     try {
+      setLoadingList(true);
+
       const res = await api.get("/invitations",{
      headers: {'Authorization':`Bearer ${token}`}
      });
+
+     setLoadingList(false);
 
      const payload = res.data;
      const invitations = payload.data.invitations;
@@ -354,6 +382,7 @@ const Chatbox = ({setClickedChat,setType}) => {
              // Form
   const onChange = (e) => {
     setFilter(e.target.value);
+    setLoadingList(true)
   }
 
   const onSearch = (e) => {
@@ -375,9 +404,6 @@ const Chatbox = ({setClickedChat,setType}) => {
   const toggleSidebar = () => {
     setSidebar(prev => !prev)
   }
-
-const addDropdown = ["Tambah Teman", "Tambah Grup"];
-const otherDropdown = ["Teman yang ultah","Profil","Setelan","Keluar"];
 
 
   return (
@@ -417,7 +443,7 @@ const otherDropdown = ["Teman yang ultah","Profil","Setelan","Keluar"];
 
           <section className="chats-section">
                  <div className="chats">
-                 {loadingList  && list.length === 0 ?
+                 {loadingList ?
                   <p className="empty-list"> <TailSpin height = "64" width = "64" radius = "9" color = '#6C5CE7' ariaLabel = 'three-dots-loading'  wrapperStyle wrapperClass /> </p>:
                     list.length === 0 ? <p className="empty-list">No results..</p> : list.map(item => renderBox(item))}
                  </div>

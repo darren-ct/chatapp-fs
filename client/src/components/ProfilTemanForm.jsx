@@ -1,0 +1,106 @@
+import {useState,useContext, useEffect} from "react";
+import { AppContext } from "../App";
+
+
+import Input from "./basic/Input";
+import Button from "./basic/Button";
+import {TailSpin} from "react-loader-spinner"
+
+import api from "../connection";
+
+
+import {useForm} from "react-hook-form";
+import {yupResolver} from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+const schema = yup.object().shape({
+    name : yup.string().min(3).required("Name is required")
+  });
+
+
+const ProfilTemanForm = ({preset,setErrMsg,setSuccessMsg,getFriendProfile,id}) => {
+       const{token} = useContext(AppContext);
+
+       const {register, handleSubmit,formState:{errors},reset} = useForm({
+        resolver: yupResolver(schema),
+        defaultValues: preset
+       });
+
+
+      const[uploadLoader,setUploadLoader] = useState(false);
+
+
+    //  Function
+    const onSubmit = async(data) => {
+
+        setErrMsg("");
+
+       try {
+
+        setUploadLoader(true)
+
+        await api.put(`/profile/${id}`, {name:data.name} , {
+            headers: {'Authorization':`Bearer ${token}`}
+        })
+
+        setUploadLoader(false);
+        reset();
+
+        getFriendProfile();
+        setSuccessMsg("Profile changed!");
+
+       } catch (err) {
+
+        console.log(err)
+        const payload = err.response.data;
+        const message = payload.message;
+
+        setErrMsg(message)
+       }
+
+    };
+
+   
+
+
+    // LOADER
+    if(uploadLoader){
+        return (
+            <div className="dynamic">
+                 <TailSpin height = "64" width = "64" radius = "9" color = '#6C5CE7' ariaLabel = 'three-dots-loading'  wrapperStyle wrapperClass />
+            </div>
+             )
+    }
+
+  return (
+    <>
+
+   
+
+    <form onSubmit={handleSubmit(onSubmit)}>
+
+    <label className="upload-img" style={{cursor:"default",width:"100%"}}>
+        <img className="profile-image" src={!preset.image ? "" : preset.image} />
+        <span>Foto Profil</span>  
+     </label>
+
+        
+        <span className="fixed-label">Sahabataku_id : <p>{preset.id}</p></span>
+
+        <span className="input-ph">Nama Tampilan Saya</span>
+        <Input styling="outline" type="text" placeholder="Isi nama" name="name" errors={errors} register={register} />
+       
+        <span className="fixed-label">Nomor Telepon : <p>{preset.number}</p></span>
+        <span className="fixed-label">Caption : <p>{preset.caption}</p></span>
+        <span className="fixed-label">Tanggal lahir : <p>{preset.birth.slice(0,10)}</p></span>
+
+       
+        <Button styling="primary" width="full" content="Edit Profil"/>
+        
+    </form>
+
+    </>
+  )
+}
+
+export default ProfilTemanForm

@@ -31,6 +31,14 @@ export const StyledMessage = styled.div`
            padding: 12px 40px 14px 24px ;
            cursor: pointer;
 
+           .message-name{
+            position: absolute;
+            bottom: 100%;
+            left: 0px;
+            font-size:12px;
+            color: black;
+                }
+
            .triangle{
                background-color:${(props)=>props.isMe? "#6c5ce7" : "white"};
                border: 1px solid;

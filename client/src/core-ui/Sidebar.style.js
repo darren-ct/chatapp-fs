@@ -4,13 +4,14 @@ export const StyledSidebar = styled.div`
 
 .sidebar{
    
-    right: 0px;
+    right: ${(props)=>props.position === "right" ? "0px" : "0px"};
     top: 0px;
-    width: 100%;
+    width: ${(props)=>props.position === "right" ? "420px" : "100%"};
     position: absolute;
     z-index: 100;
 
-    height: 100vh;
+    min-height: 100vh;
+    height: 100%;
     background-color: white;
     transition: 300ms ease;
 
@@ -21,6 +22,8 @@ export const StyledSidebar = styled.div`
     overflow-y: scroll;
     -ms-overflow-style: none;  
      scrollbar-width: none;  
+
+     border-left: 1px solid rgba(108,92,231,.2);
             
     &::-webkit-scrollbar{
     display: none;
@@ -214,6 +217,7 @@ export const StyledSidebar = styled.div`
 
 .sidebar.hide{
     transform: translate(-100%);
+    transform : ${(props)=>props.position === "right" ? "translate(100%)" : "translate(-100%)"};
 }
 
 

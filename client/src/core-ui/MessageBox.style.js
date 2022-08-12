@@ -6,6 +6,7 @@ export const StyledMessageBox = styled.div`
      display: flex;
      flex-direction: column;
      align-items: stretch;
+     overflow-x: hidden;
 
      .empty-message{
         position: absolute;
@@ -77,7 +78,7 @@ export const StyledMessageBox = styled.div`
      .msg-section{
         flex:1;
         position: relative;
-        max-height: 498px;
+        max-height: 440px;
         overflow-y: scroll;
         -ms-overflow-style: none;  
          scrollbar-width: none;  

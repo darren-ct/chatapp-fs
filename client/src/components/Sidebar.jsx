@@ -6,26 +6,19 @@ import backArrow from "../assets/backArrow.svg"
 import TambahTeman from "./TambahTeman";
 import TambahGrup from "./TambahGrup";
 import ProfilSaya from "./ProfilSaya";
+import ProfilTeman from "./ProfilTeman";
+import ProfilGrup from "./ProfilGrup";
 
 const Sidebar = ({closeSidebar,sidebar,position,content,contentId}) => {
 
  const[successMsg,setSuccessMsg] = useState("");
- const{setUser} = useContext(AppContext)
 
-
+//  Functions
   const renderContent = (content) => {
-
-    
-
     switch(content) {
+      // LEFT
       case "Profil":
           return <ProfilSaya  closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg} />
-        break;
-      case "Setelan":
-             return //settings components
-        break; 
-      case "Teman yang ultah":
-             return //birthdays components
         break;
       case "Tambah Teman":
             return <TambahTeman closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg}/>
@@ -33,21 +26,27 @@ const Sidebar = ({closeSidebar,sidebar,position,content,contentId}) => {
       case "Tambah Grup":
              return <TambahGrup closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg}/>
         break;
+      // RIGHT
+          // Chat
       case "Lihat profil kontak":
-             return // friendprofile
-        break;
+             return <ProfilTeman closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg} id={contentId}/>
+      break;
+
+          //Group
       case "Lihat profil grup":
-            return // groupprofile
-        break;
-      case "Keluar" :
-            localStorage.removeItem("user");
-            return setUser(null);
-        break;
+            return <ProfilGrup closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg} id={contentId}/>
+      break;
+
+
+      //BOTH
+      case "Ganti layar belakang":
+            
+      break;
+      
       default:
         return ""
     } 
   };
-
 
   return (
     <StyledSidebar position={position}>

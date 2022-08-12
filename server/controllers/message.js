@@ -35,7 +35,7 @@ const getMessages = async(req,res) => {
             const friendId = friend.friend_id;
 
           messageQuery = `
-         SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image, isLiked,
+         SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image,
          DAYNAME(message.createdAt) AS day,
          DATE(message.createdAt) AS date,
          TIME(message.createdAt) AS time
@@ -59,12 +59,12 @@ const getMessages = async(req,res) => {
         } else {
 
          messageQuery = `
-        SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image,
+        SELECT message_id, sender_id  , body , replying , isRead , isForwarded , user_friend.display_name , profile_image, profile.display_name AS username,
         DATE(createdAt) AS date,
         TIME(createdAt) AS time,
         DAY(createdAt) AS day
         FROM group_message INNER JOIN profile
-        ON group_message.sender_id = profile.user_id AND group_message.room_id = ${roomId} AND group_message.owner_id = ${userId}
+        ON group_message.sender_id = profile.user_id AND group_message.room_id = ${roomId} AND group_message.owner_id = ${userId} 
         LEFT JOIN user_friend
         ON user_friend.friend_id = profile.user_id AND user_friend.user_id = ${userId}
         ORDER BY group_message.createdAt ASC
@@ -122,6 +122,9 @@ const getMessages = async(req,res) => {
 const likeMessage = async(req,res) => {
 const messageId = req.params.id;
 
+
+     console.log(messageId)
+
        try {
 
         const message = await Message.findOne({
@@ -155,6 +158,8 @@ const messageId = req.params.id;
 const sendMessage = async(req,res) => {
       const userId = req.user.id;
       const {isGroup,roomId,message,replying,isForwarded} = req.body;
+
+      console.log(message)
 
 
       try {
@@ -228,7 +233,7 @@ const sendMessage = async(req,res) => {
         }
 
         // send message
-         const message = await GroupMessage.create({
+         const newMessage = await GroupMessage.create({
             room_id : roomId,
             sender_id : userId,
             owner_id : userId,
@@ -240,7 +245,7 @@ const sendMessage = async(req,res) => {
         //   Loop it
         const query = `
         SELECT user_id FROM user_group 
-        WHERE user_id <> ${userId} AND room_id = ${roomId}
+        WHERE user_id <> ${userId} AND room_id = ${roomId} AND status='Accepted'
         `
 
         const members = await sequelize.query(
@@ -256,7 +261,7 @@ const sendMessage = async(req,res) => {
                 body :  message ,
                 replying:replying,
                 isForwarded:isForwarded ? isForwarded : "false",
-                refering : message.message_id
+                refering : newMessage.message_id
               });
 
          })
@@ -330,11 +335,11 @@ const unsendMessage = async(req,res) => {
 };
 
 const clearMessages = async(req,res) => {
-   const{isGroup, roomId} = req.body;
+   const{isGroup, roomId} = req.query;
    const userId = req.user.id;
 
    try {
-        if(!isGroup){
+        if(isGroup !== "true"){
 
          await Message.destroy({
             where : {
@@ -358,6 +363,7 @@ const clearMessages = async(req,res) => {
           });
 
        } catch(err) {
+        console.log(err)
          return sendErr("Server error",res)
        }
  

@@ -1,5 +1,6 @@
 import Tabbar from "../components/advanced/Tabbar";
 import Dropdown from "./advanced/Dropdown";
+import Sidebar from "./Sidebar";
 
 import { useEffect, useState, useContext,useRef } from "react";
 import { AppContext } from "../App";
@@ -15,6 +16,8 @@ import api from "../connection";
 
 import {TailSpin} from "react-loader-spinner"
 
+import {friendDropdown,groupDropdown} from "../helpers/variables"
+
 
 
 
@@ -24,23 +27,30 @@ const Messagebox = ({clickedChat,type}) => {
   // STATES
       // Drops 
   const[otherDrop,setOtherDrop] = useState(false);
-  const[messageDrop,setMessageDrop] = useState(false);
+
+      // Sidebar
+  const[sidebar,setSidebar] = useState(false);
+  const[sidebarContent,setSidebarContent] = useState(null);
+ 
 
       // Tabs
   const[isShown,setIsShown] = useState(false);
   const [ listType,setListType] = useState(null)
   const [others,setOthers] = useState([]);
 
+     
+
     // Messages
+  const [profile,setProfile] = useState(null);
+
   const messagesEndRef = useRef(null);
   const [messages,setMessages ] = useState([]);
   const [msgForm,setMsgForm] = useState("")
   const [replyId,setReplyId] = useState(null)
 
-
-  const [profile,setProfile] = useState(null);
-  
   const [mainLoading,setMainLoading] = useState(false);
+
+
  
 
   // UseEffect 
@@ -79,16 +89,21 @@ const Messagebox = ({clickedChat,type}) => {
   };
 
   const toggleOtherDrop = () => {
-   setMessageDrop(false);
    setOtherDrop(prev => !prev);
   };
+
+  const toggleSidebar = () => {
+    setSidebar(prev => !prev)
+    
+  }
+
 
   const onChange = (e) => {
     setMsgForm(e.target.value)
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({behavior:"smooth"});
+    messagesEndRef.current?.scrollIntoView();
 }
 
      // message related
@@ -148,39 +163,21 @@ const Messagebox = ({clickedChat,type}) => {
 
   };
 
-  const deleteMessage = async() => {
-
-  };
-
-  const unsendMessage = async() => {
-
-  };
-
-  const replyMessage = async() => {
-
-  };
-
-  const forwardMessage = async() => {
-
-  };
-
-
-  // Array
-const groupDropdown = ["Bersihkan Chat", "Lihat profil grup","Ganti layar belakang","Keluar grup"];
-const friendDropdown = ["Bersihkan Chat","Hapus Chat","Ganti layar belakang","Blokir orang","Lihat profil kontak"];
-const messageDropdown = ["Unsend Message", "Delete for me","Forward Message","Reply Message"];
 
 
  
   return (
     <StyledMessageBox>
+        
+        <Sidebar closeSidebar={toggleSidebar} sidebar={sidebar} position="right" content={sidebarContent} contentId={clickedChat} type={type}/>
+
 
     {!clickedChat? 
     <p className="empty-message">Please click one of your chats.</p> : 
     (
       <>
       <header>
-                <img src={!profile ? "" : type === "group" && profile.image ? profile.image :  profile.profile_image ? profile.profile_image : ""} className="msg-profile" alt=""/>
+                <img  onClick={()=>{setSidebar(true); if(type === "single") {setSidebarContent("Lihat profil kontak")}else{setSidebarContent("Lihat profil grup")}}}  src={!profile ? "" : type === "group" && profile.image ? profile.image :  profile.profile_image ? profile.profile_image : ""} className="msg-profile" alt=""/>
 
                 <div className="msg-info">
                      {!profile ? "" : profile.isOnline === "true" && <div className="status-dot"></div> }
@@ -188,7 +185,7 @@ const messageDropdown = ["Unsend Message", "Delete for me","Forward Message","Re
                      <div className="msg-status">{!profile ? "" : type === "group" ? "" : profile.isOnline === "true" ? "online" : `Last online ${profile.hour}:${profile.minute} `}</div>
                 </div>
                 <div style={{position:"relative"}}>
-                     {otherDrop && <Dropdown items={friendDropdown} /> }
+                     {!otherDrop ? "" : type === "single" ? <Dropdown items={friendDropdown}  id={clickedChat} toggleSidebar={toggleSidebar} setSidebarContent={setSidebarContent} /> : <Dropdown items={groupDropdown} id={clickedChat} toggleSidebar={toggleSidebar} setSidebarContent={setSidebarContent} />  }
                      <img src={dots} className="other-btn" onClick={toggleOtherDrop} alt=""/>
                 </div>
         </header>
@@ -199,7 +196,7 @@ const messageDropdown = ["Unsend Message", "Delete for me","Forward Message","Re
                   
                       { mainLoading ? 
                        <div className="dynamic"> <TailSpin height = "64" width = "64" radius = "9" color = '#6C5CE7' ariaLabel = 'three-dots-loading'  wrapperStyle wrapperClass /> </div>    : 
-                      messages ? messages.map(message => <Message key={message.message_id} message={message} getMessages={getMessages}/>) : ""}
+                      messages ? messages.map(message => <Message key={message.message_id} message={message} type={type}/>) : ""}
                       <div ref={messagesEndRef}></div>
                   </div>
         </section>

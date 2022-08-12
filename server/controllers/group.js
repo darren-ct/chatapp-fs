@@ -3,13 +3,12 @@ const sequelize = require('../config/connect');
 const {sendErr} = require("../helper/other");
 const GroupRoom = require("../models/GroupRoom");
 const UserGroup = require("../models/UserGroup");
+const GroupMessage = require("../models/GroupMessage");
 
 const fs = require('fs');
 const path = require("path"); 
 
 const Joi = require('joi');
-const Message = require('../models/Message');
-
 
 require("dotenv").config();
 
@@ -23,6 +22,7 @@ const getGroups = async(req,res) => {
      FROM user_group INNER JOIN group_room
      ON group_room.room_id = user_group.room_id
      AND user_group.user_id = ${userId} AND status='Accepted'
+     ORDER BY group_name ASC
      `;
 
 
@@ -47,15 +47,32 @@ const getGroups = async(req,res) => {
 
 const getProfile = async(req,res) => {
     const roomId = req.params.id;
+    const userId = req.user.id;
 
     try {
+
+        // Check the membership
+        const myInfo = await UserGroup.findOne({
+            where : {
+                user_id:userId,
+                room_id:roomId
+            },
+            attributes : ["roles"]
+        });
+
+        if(!myInfo){
+            return sendErr("You are not inside the group",res)
+        };
+
+        // Find group info
 
         const profile = await GroupRoom.findOne({where:{room_id:roomId}});
 
         return res.status(201).send({
             status:"Success",
             data : {
-                profile : profile
+                role : myInfo.roles,
+                profile : {name : profile.group_name , description : profile.description, image : profile.image ? process.env.SERVER_URL + profile.image : null}
             }
         })
 
@@ -136,18 +153,16 @@ const editGroup = async(req,res) => {
     const userId = req.user.id;
     const roomId = req.params.id;
     const{name,description} = req.body;
-    const file = req.file.filename;
+    
 
     try {
         // Check schema
         const schema = Joi.object({
            name: Joi.string()
-           .alphanum()
            .min(3)
-           .max(12)
            .required(),
    
-           description : Joi.string().min(8).max(24)
+           description : Joi.string().min(8)
            
         });
    
@@ -164,32 +179,47 @@ const editGroup = async(req,res) => {
         };
 
         // Update profile and delete old
-        const oldGroup = await GroupRoom.findOne({
-            where : {room_id:roomId},
-            attributes : ["image"]
-        });
+        if(req.file){
+            const file = req.file.filename;
 
-        await GroupRoom.update({
-            image : file,
-            group_name : name,
-            description : description,
-       },{
-           where : {
-                room_id : roomId
-           }
-       });
-
-       if(oldGroup.image){
-        fs.unlink(path.join(__dirname,"..","uploads",oldGroup.image),(err)=>{console.log(err)})
-       };
-
+            const oldGroup = await GroupRoom.findOne({
+                where : {room_id:roomId},
+                attributes : ["image"]
+            });
+    
+            await GroupRoom.update({
+                image : file,
+                group_name : name,
+                description : description,
+           },{
+               where : {
+                    room_id : roomId
+               }
+           });
+    
+           if(oldGroup.image){
+            fs.unlink(path.join(__dirname,"..","uploads",oldGroup.image),(err)=>{console.log(err)})
+           };
+    
+        } else {
+            await GroupRoom.update({
+                group_name : name,
+                description : description,
+           },{
+               where : {
+                    room_id : roomId
+               }
+           });
+        };
+        
         return res.status(201).send({
            "status" : "Success"
         })
        
         } catch(err) {
    
-           return sendErr("Server error",res)
+           console.log(err);
+           return sendErr("Server error",res);
         }
 };
 
@@ -205,7 +235,7 @@ try {
      }});
 
     //  remove messages
-    await Message.destroy({where:{
+    await GroupMessage.destroy({where:{
         owner_id : userId,
         room_id : roomId
     }});
@@ -215,6 +245,7 @@ try {
     });
 
 } catch(err) {
+    console.log(err)
     return sendErr("Server error",res)
 }
 
@@ -254,7 +285,8 @@ const userId = req.user.id;
 const sendInvitation = async(req,res) => {
    const userId = req.user.id;
    const roomId = req.body.roomId;
-   const friendId = req.body.friendId;
+   const friendIds = req.body.friendIds;
+
 
    try {
         const user = await UserGroup.findOne({
@@ -270,24 +302,117 @@ const sendInvitation = async(req,res) => {
         };
 
 
-        // Invite
-        await UserGroup.create({
-             room_id : roomId,
-             user_id : friendId,
-             roles : "Member",
-             status : "Pending"
-        })
+        // Invite friends
+        friendIds.forEach(async(friendId)=>{
+
+            await UserGroup.create({
+                room_id : roomId,
+                user_id : friendId,
+                roles : "Member",
+                status : "Pending"
+           })
+
+        });
+        
 
         return res.status(201).send({
             status : "Success"
         })
 
    } catch(err) {
+    console.log(err)
     return sendErr("Server Error",res)
    }
 }
 
 // Member
+const getMembers = async(req,res) => {
+    const userId = req.user.id;
+    const roomId = req.params.id;
+
+    try {
+         // Check the membership
+        const myInfo = await UserGroup.findOne({
+            where : {
+                user_id:userId,
+                room_id:roomId
+            }
+        });
+
+        if(!myInfo){
+            return sendErr("You are not inside the group",res)
+        };
+
+        // get Members
+        const query = `
+        SELECT user_friend.display_name AS display_name, user_group.roles , profile.display_name AS username , profile.profile_image , profile.user_id AS id
+        FROM user_group INNER JOIN profile
+        ON user_group.user_id = profile.user_id AND room_id = ${roomId} AND user_group.status <> "Pending"
+        LEFT JOIN user_friend 
+        ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userId}
+        `;
+
+        const members = await sequelize.query(query,{type:QueryTypes.SELECT});
+
+        res.status(201).send({
+            status : "Success",
+            data : {
+                members : members.map(member => {return {...member,profile_image : member.profile_image ? process.env.SERVER_URL + member.profile_image : null}})
+            }
+        });
+
+
+
+    } catch(err) {
+        return sendErr("Server error",res)
+    }
+};
+
+const getNonMembers = async(req,res) => {
+    const userId = req.user.id;
+    const roomId = req.params.id;
+
+    console.log(roomId)
+
+    try {
+        // Check the membership
+       const myInfo = await UserGroup.findOne({
+           where : {
+               user_id:userId,
+               room_id:roomId
+           }
+       });
+
+       if(!myInfo){
+           return sendErr("You are not inside the group",res)
+       };
+
+       // get non members
+       const query = `
+       SELECT user_friend.display_name AS display_name, profile.display_name AS username , profile.profile_image , profile.user_id AS id , roles, status
+       FROM profile INNER JOIN user_friend 
+       ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userId}
+       LEFT JOIN user_group
+       ON profile.user_id = user_group.user_id AND user_group.room_id = ${roomId} 
+       WHERE status IS NULL OR status = "Declined"
+       `;
+
+       const nonMembers = await sequelize.query(query,{type:QueryTypes.SELECT});
+
+       res.status(201).send({
+           status : "Success",
+           data : {
+               nonMembers : nonMembers.map(nonmember => {return {...nonmember,profile_image : nonmember.profile_image ? process.env.SERVER_URL + nonmember.profile_image : null}})
+           }
+       });
+
+
+
+   } catch(err) {
+       return sendErr("Server error",res)
+   }
+};
+
 const joinGroup = async(req,res) => {
     const userId = req.user.id;
     const roomId = req.body.roomId;
@@ -318,7 +443,7 @@ const joinGroup = async(req,res) => {
     return sendErr("Server Error",res)
    }
 
-}
+};
 
 const updateRoles = async(req,res) => {
 const userId = req.user.id;
@@ -370,12 +495,12 @@ return sendErr("Server error",res)
  
 }
 
-}
+};
 
 const kickMember = async(req,res) => {
     const userId = req.user.id;
-    const roomId = req.body.room_id;
-    const friendId = req.params.id;
+    const roomId = req.query.room;
+    const friendId = req.query.id;
 
     try {
 
@@ -409,6 +534,13 @@ const kickMember = async(req,res) => {
                 room_id : roomId,
                 user_id : friendId
         }})
+
+        await GroupMessage.destroy({
+            where : {
+                room_id : roomId,
+                owner_id : friendId
+            }
+        });
     
         return res.status(201).send({
             status : "Success"
@@ -424,6 +556,6 @@ const kickMember = async(req,res) => {
 module.exports = {
     getGroups,getProfile,createGroup,editGroup,leaveGroup,
     getInvitations,sendInvitation,
-    joinGroup, updateRoles, kickMember
+    joinGroup, updateRoles, kickMember,getMembers,getNonMembers
 }
 

@@ -34,14 +34,8 @@ const Message = sequelize.define("message", {
     },
     isForwarded : {
         type : DataTypes.STRING,
-        allowNull: false
-    },
-    isLiked : {
-        type : DataTypes.STRING,
-        allowNull : false,
-        defaultValue:"false"
-    },
-
+        allowNull: false}
+    ,
     refering : {
         type: DataTypes.INTEGER,
     }

@@ -29,7 +29,7 @@ const ProfilSayaForm = ({preset,setErrMsg,setSuccessMsg,getMyProfile}) => {
 
        const {register, handleSubmit,formState:{errors},reset} = useForm({
         resolver: yupResolver(schema),
-        defaultValues: preset
+        defaultValues: {...preset,birth:preset.birth.slice(0,10)}
        });
 
 
@@ -140,7 +140,7 @@ const ProfilSayaForm = ({preset,setErrMsg,setSuccessMsg,getMyProfile}) => {
         <Input styling="outline" type="text" placeholder="Isi nomor telepon" name="number" errors={errors} register={register} />
 
         <span className="input-ph"> Tanggal lahir</span>
-        <Input styling="outline" type="text" placeholder="Format harus (DD/MM/YYYY)" name="birth" errors={errors} register={register} />
+        <Input styling="outline" type="text" placeholder="Format harus (YYYY/MM/DD)" name="birth" errors={errors} register={register} />
 
        
         <Button styling="primary" width="full" content="Edit Profil"/>

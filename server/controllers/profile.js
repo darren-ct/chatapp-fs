@@ -1,23 +1,48 @@
 const Profile = require("../models/Profile");
+const UserChat = require("../models/UserChat");
 const Joi = require('joi');
 
 const {sendErr} = require("../helper/other")
 
 const fs = require('fs');
 const path = require("path"); 
+const UserFriend = require("../models/UserFriend");
 
 
 require("dotenv").config();
 
 const getProfile = async(req,res) => {
-    const userId = req.params.id;
+    const MyId = req.user.id
+    const roomId = req.params.id;
 
     try {
+        const myFriend = await UserChat.findOne({
+           where : {
+              user_id : MyId,
+              room_id : roomId
+           },
+           attributes : ["friend_id"]
+        });
+
+        if(!myFriend){
+            return sendErr("Friend not found")
+        }
+
+        const myFriendId = myFriend.friend_id;
+
         const profile = await Profile.findOne({
             where : {
-                user_id : userId
+                user_id : myFriendId
             }
         });
+
+        const userFriend = await UserFriend.findOne({
+            where : {
+                user_id : MyId,
+                friend_id : myFriendId
+            },
+            attributes : ["display_name"]
+        })
 
         if(!profile){
             return sendErr("Profile not found", res)
@@ -28,7 +53,7 @@ const getProfile = async(req,res) => {
             data : {
                 profile : {
                     id : profile.sahabat_id,
-                    name : profile.display_name ,
+                    name : userFriend.display_name ,
                     number : profile.number ? profile.number : null,
                     image : profile.profile_image ? process.env.SERVER_URL + profile.profile_image : null,
                     caption : profile.caption ? profile.caption : null,
@@ -38,7 +63,8 @@ const getProfile = async(req,res) => {
             }
         })
     } catch(err) {
-        return sendErr("Server error",err)
+        console.log(err)
+        return sendErr("Server error",res)
     }
 
 };
@@ -183,6 +209,61 @@ const editMyProfile = async(req,res) => {
     }
 }
 
+const editProfile = async(req,res) => {
+    const MyId = req.user.id
+    const roomId = req.params.id;
+    const {name} = req.body;
+
+    try {
+
+        // Joi
+        const schema = Joi.object({
+            name: Joi.string()
+                .min(3)
+                .required(),
+        });
+        await schema.validateAsync(req.body);
+
+        // Find friend id
+        const myFriend = await UserChat.findOne({
+            where : {
+               user_id : MyId,
+               room_id : roomId
+            },
+            attributes : ["friend_id"]
+         });
+ 
+         if(!myFriend){
+             return sendErr("Friend not found")
+         }
+ 
+         const myFriendId = myFriend.friend_id;
+
+        //  Update
+        await UserFriend.update({display_name:name},{
+            where : {
+                user_id : MyId,
+                friend_id : myFriendId
+            }
+        });
+
+
+        // 
+        return res.status(201).send({
+            status: "Success",
+        })
+
+
+
+    } catch (err) {
+
+        sendErr("Server Error",res)
+        console.log(err);
+
+    }
+}
+
 module.exports.getProfile = getProfile;
 module.exports.getMyProfile = getMyProfile;
 module.exports.editMyProfile = editMyProfile;
+module.exports.editProfile = editProfile;

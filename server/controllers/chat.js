@@ -6,7 +6,6 @@ const sequelize = require('../config/connect');
 const {sendErr} = require("../helper/other");
 
 
-
 const getChats = async(req,res) => {
     const userID = req.user.id;
     const isPinned = req.query.isPinned;
@@ -21,7 +20,6 @@ const getChats = async(req,res) => {
     TIME(MAX(message.createdAt)) AS last_time, DATE(MAX(message.createdAt)) AS last_date
     
    
-
     FROM user_chat INNER JOIN chat_room
     ON user_chat.room_id = chat_room.room_id AND user_chat.user_id = ${userID}
 
@@ -42,13 +40,10 @@ const getChats = async(req,res) => {
     ORDER BY isPinned, last_time DESC
     `;
 
-   
-
      queryGroup = `
     SELECT image, group_name , group_room.room_id, isPinned ,COUNT(group_message.room_id) AS notif,
     TIME(MAX(group_message.createdAt)) AS last_time, DATE(MAX(group_message.createdAt)) AS last_date
  
-    
     FROM user_group INNER JOIN group_room
     ON user_group.room_id = group_room.room_id AND user_group.user_id = ${userID}
 
@@ -61,13 +56,10 @@ const getChats = async(req,res) => {
 
    
     } else {
-
        queryChat = `
        SELECT profile_image, user_friend.display_name, user.user_id ,  chat_room.room_id ,COUNT(message.room_id) AS notif , 
        TIME(MAX(message.createdAt)) AS last_time, DATE(MAX(message.createdAt)) AS last_date
        
-      
-   
        FROM user_chat INNER JOIN chat_room
        ON user_chat.room_id = chat_room.room_id AND user_chat.user_id = ${userID} AND isPinned = 'true'
    
@@ -80,14 +72,12 @@ const getChats = async(req,res) => {
        INNER JOIN user_friend
        ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID}
        
-   
        INNER JOIN message
        ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false' 
    
        GROUP BY message.room_id
        ORDER BY isPinned, last_time DESC
     `;
-
     queryGroup = `
     
     SELECT image, group_name , group_room.room_id ,COUNT(group_message.room_id) AS notif,
@@ -102,7 +92,7 @@ const getChats = async(req,res) => {
 
     GROUP BY group_message.room_id
     ORDER BY isPinned, last_time DESC
-    
+
     `;
     }
 
@@ -175,29 +165,6 @@ try {
 
 };
 
-const deleteChat = async(req,res) => {
-    const userId = req.user.id;
-
-    const {isGroup,roomId,friendId} = req.body;
-
-    try {
-
-        if(isGroup){
-
-        } else {
- 
-        }
-
-        return res.status(201).send({
-            status : "Success"
-        })
-
-    } catch(err) {
-
-        sendErr("Server error",res)
-    }
-};
-
 const pinChat = async(req,res) => {
     const userId = req.user.id;
 
@@ -233,4 +200,40 @@ const pinChat = async(req,res) => {
     }
 };
 
-module.exports = {getChats,startChat,deleteChat,pinChat}
+const unpinChat = async(req,res) => {
+    const userId = req.user.id;
+
+    const {isGroup,roomId,friendId} = req.body;
+
+    try {
+        if(isGroup){
+            await UserGroup.update({
+                isPinned : "false"
+            },{
+                where : {
+                    user_id : userId,
+                    room_id : roomId
+                }
+            })
+        } else {
+            await UserChat.update({
+                isPinned : "false"
+            },{
+                where : {
+                    user_id : userId,
+                    room_id : roomId,
+                    friend_id : friendId
+                }
+            })
+        };
+
+        return res.status(201).send({
+           status : "Success"
+        });
+
+    } catch(err) {
+        sendErr("Server error",res)
+    }
+};
+
+module.exports = {getChats,startChat,pinChat,unpinChat}
