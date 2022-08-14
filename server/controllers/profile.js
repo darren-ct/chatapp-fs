@@ -1,3 +1,5 @@
+const { QueryTypes } = require('sequelize');
+const sequelize = require('../config/connect');
 const Profile = require("../models/Profile");
 const UserChat = require("../models/UserChat");
 const Joi = require('joi');
@@ -199,8 +201,20 @@ const editMyProfile = async(req,res) => {
 
             }
 
+
+        // GET IMAGE
+        const newProfile = await Profile.findOne({
+            where : {
+                user_id : userId
+            },
+            attributes : ["profile_image"]
+        })
+
         return res.status(201).send({
-            status : "Success"
+            status : "Success",
+            data : {
+                image : newProfile.profile_image ? process.env.SERVER_URL + newProfile.profile_image : null
+            }
         });
 
     } catch(err) {
@@ -247,6 +261,24 @@ const editProfile = async(req,res) => {
             }
         });
 
+        const query = `
+        SELECT profile_image , isOnline ,user_friend.display_name
+        FROM profile INNER JOIN user_friend
+        ON profile.user_id = user_friend.friend_id 
+        AND user_friend.friend_id = ${myFriendId}
+        AND user_friend.user_id = ${MyId}
+        `;
+
+        const profile = await sequelize.query(query,{type:QueryTypes.SELECT})
+
+        return res.status(201).send({
+           status : "Success",
+           data : {
+            profile : profile.map(item => {return {...item,profile_image : item.profile_image ? 
+                process.env.SERVER_URL + item.profile_image : null }})[0]
+           }
+
+        })
 
         // 
         return res.status(201).send({

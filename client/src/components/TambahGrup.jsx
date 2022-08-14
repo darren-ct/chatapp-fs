@@ -2,16 +2,16 @@ import { useState,useContext, useEffect} from "react"
 import { AppContext } from "../App";
 import { ChatContext } from "./Chatbox";
 
-import searchIcon from "../assets/search.svg";
-import editIcon from "../assets/editimage.png";
-import success from "../assets/successful.svg";
-
-import { StyledUserCard } from "../core-ui/UserCard.style";
 import ErrorModal from "./modals/ErrorModal";
 import {TailSpin} from "react-loader-spinner"
 import Input from "./basic/Input";
 import Button from "./basic/Button";
 
+import { StyledUserCard } from "../core-ui/UserCard.style";
+
+import searchIcon from "../assets/search.svg";
+import editIcon from "../assets/editimage.png";
+import success from "../assets/successful.svg";
 import api from "../connection";
 
 import {useForm} from "react-hook-form";
@@ -25,7 +25,7 @@ const schema = yup.object().shape({
 
 const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
     const{token} = useContext(AppContext);
-    const{getGroups,setFilter} = useContext(ChatContext);
+    const{getGroups,setFilter,setSidebarContent} = useContext(ChatContext);
     const {register, handleSubmit,formState:{errors},reset} = useForm({
         resolver: yupResolver(schema)
       });
@@ -36,18 +36,12 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
     const[errMsg,setErrMsg] = useState("");
     const[uploadLoader,setUploadLoader] = useState(false);
     const[friendsLoader,setFriendsLoader] = useState(false);
-    
-
 
     const[image,setImage] = useState(null);
     const[form,setForm] = useState({image:{value:null}});
-
-
    
     const[friends,setFriends] = useState([]);
     const[search,setSearch] = useState("");
-
-    
 
     const terpilih = friends.reduce((total,item)=>{
 
@@ -172,14 +166,8 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
           headers: {'Authorization':`Bearer ${token}`}
           });
 
-        // Reset
+       
         setUploadLoader(false);
-        reset();
-        getFriends();
-        setImage(null);
-        setForm({image:{value:null}})
-
-
         setSuccessMsg("Group created!");
         getGroups();
         setFilter("grup")
@@ -193,7 +181,6 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
 
         setErrMsg(message)
   
-
        }
 
     };
@@ -201,8 +188,8 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
 
       //  Pre-Submit
     const resetSidebar = () => {
-
-      setSuccessMsg("");
+      setSidebarContent(null);
+      setSuccessMsg(null);
       closeSidebar();
     }
 
@@ -213,7 +200,7 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
         <div className="dynamic">
                <img src={success}/>
                <span className="dynamic-message">{successMsg}</span>
-               <p className="dynamic-close" onClick={()=>{resetSidebar();setSuccessMsg("")}}>Close Sidebar</p>
+               <p className="dynamic-close" onClick={()=>{resetSidebar()}}>Close Sidebar</p>
         </div>
       )
     };
@@ -243,28 +230,28 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
         </label>
 
      <form onSubmit={handleSubmit(onSubmit)}>
-        <span className="input-ph">Nama Grup</span>
-        <Input styling="outline" type="text" placeholder="Enter name" name="name" errors={errors} register={register} />
+           <span className="input-ph">Nama Grup</span>
+           <Input styling="outline" type="text" placeholder="Enter name" name="name" errors={errors} register={register} />
        
-        <span className="input-ph">Deskripsi Grup</span>
-        <Input styling="outline" type="text" placeholder="Enter description" name="description" errors={errors} register={register} />
+            <span className="input-ph">Deskripsi Grup</span>
+            <Input styling="outline" type="text" placeholder="Enter description" name="description" errors={errors} register={register} />
        
-        <span className="input-ph">Undang anggota <p>{terpilih} terpilih</p></span>
-        <div className='search-control'>
-             <input placeholder="Cari teman mengunakan name " type="text" name="search" onChange={onChange} value={search}/>
-             <img src={searchIcon} />
-        </div>
+            <span className="input-ph">Undang anggota <p>{terpilih} terpilih</p></span>
 
-        <div className="container">
-            <div className="list">
-                 {friends.length !== 0 ? friends.map(friend => renderFriend(friend)) : 
-                    <p className="empty-list">{friendsLoader ?  <TailSpin height = "20" width = "20" radius = "9" color = '#6C5CE7' ariaLabel = 'three-dots-loading'  wrapperStyle wrapperClass /> : "No Results found..."}</p>
-                 }
+             <div className='search-control'>
+                 <input placeholder="Cari teman mengunakan name " type="text" name="search" onChange={onChange} value={search}/>
+                 <img src={searchIcon} />
+             </div>
+
+            <div className="container">
+                 <div className="list">
+                     {friends.length !== 0 ? friends.map(friend => renderFriend(friend)) : 
+                       <p className="empty-list">{friendsLoader ?  <TailSpin height = "20" width = "20" radius = "9" color = '#6C5CE7' ariaLabel = 'three-dots-loading'  wrapperStyle wrapperClass /> : "No Results found..."}</p>
+                      }
+                 </div>
             </div>
-        </div>
 
-        <Button styling="primary" width="full" content="Tambahkan Grup"/>
-        
+          <Button styling="primary" width="full" content="Tambahkan Grup"/>
     </form>
         
 

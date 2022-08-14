@@ -2,19 +2,22 @@ const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/connect');
 const {sendErr} = require("../helper/other");
 const Profile = require('../models/Profile');
+const UserChat = require('../models/UserChat');
 const UserFriend = require("../models/UserFriend");
-const User = require("../models/User");
 
 const getUsers = async(req,res) => {
     const userId = req.user.id;
 
     const query = `
     SELECT user.user_id ,user.username, profile.sahabat_id, profile_image , user_friend.user_id AS connection
+
     FROM user INNER JOIN profile
     ON user.user_id = profile.user_id AND user.user_id <> ${userId}
+
     LEFT JOIN user_friend
     ON user.user_id = user_friend.friend_id
     AND user_friend.user_id = ${userId}
+
     ORDER BY user.username ASC
     `;
 
@@ -42,20 +45,22 @@ const getFriends = async(req,res) => {
  let query = null;
 
  if(!isBlock || isBlock === "false"){
-  query = `
- SELECT friend_id , profile_image , user_friend.display_name , isBlock
- FROM user_friend INNER JOIN profile
- ON profile.user_id = user_friend.friend_id 
- AND user_friend.user_id = ${userId}
- ORDER BY user_friend.display_name ASC
- ` } else {
-    query = `
-    SELECT friend_id , profile_image , user_friend.display_name 
-    FROM user_friend INNER JOIN profile
-    ON profile.user_id = user_friend.friend_id 
-    AND user_friend.user_id = ${userId} AND isBlock = 'true'
-    ORDER BY user_friend.display_name ASC
-    `
+   query = `
+      SELECT friend_id , profile_image , user_friend.display_name , isBlock
+
+      FROM user_friend INNER JOIN profile
+      ON profile.user_id = user_friend.friend_id 
+      AND user_friend.user_id = ${userId}
+      ORDER BY user_friend.display_name ASC
+       ` 
+   } else {
+   query = `
+      SELECT friend_id , profile_image , user_friend.display_name 
+      FROM user_friend INNER JOIN profile
+      ON profile.user_id = user_friend.friend_id 
+      AND user_friend.user_id = ${userId} AND isBlock = 'true'
+      ORDER BY user_friend.display_name ASC
+       `
  };
 
  try {
@@ -123,31 +128,68 @@ const changeDisplay = async(req,res) => {
             where : {user_id : userId,friend_id:friendId}
         });
 
+        const query = `
+        SELECT profile_image , isOnline ,user_friend.display_name
+        FROM profile INNER JOIN user_friend
+        ON profile.user_id = user_friend.friend_id 
+        AND user_friend.friend_id = ${friendId}
+        AND user_friend.user_id = ${userId}
+        `;
+
+        const profile = await sequelize.query(query,{type:QueryTypes.SELECT})
+
         return res.status(201).send({
-           status : "Success"
+           status : "Success",
+           data : {
+            profile : profile.map(item => {return {...item,profile_image : item.profile_image ? 
+                process.env.SERVER_URL + item.profile_image : null }})[0]
+           }
+
         })
 
     } catch(err) {
+        console.log(err)
         return sendErr("Server error",res)
     }
 };
 
 const blockFriend = async(req,res) => {
     const userId = req.user.id;
-    const friendId = req.params.id;
+    const roomId = req.query.roomId;
+    const friendId = req.query.friendId;
 
     try {
+         
+        if(!friendId){
+
+        const friend = await UserChat.findOne({
+            where : {
+                user_id : userId,
+                room_id : roomId
+            },
+            attributes : ["friend_id"]
+        });
+
         await UserFriend.update({
             isBlock : "true"
         },{
-            where : {user_id : userId,friend_id:friendId}
-        });
+            where : {user_id : userId,friend_id:friend.friend_id}
+        }); 
+    
+        } else {
+            await UserFriend.update({
+                isBlock : "true"
+            },{
+                where : {user_id : userId,friend_id:friendId}
+            }); 
+        }
 
         return res.status(201).send({
             status : "Success"
          })
 
     } catch(err) {
+        console.log(err)
         return sendErr("Server error",res)
     }
 };

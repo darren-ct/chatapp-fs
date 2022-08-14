@@ -26,10 +26,7 @@ export const chatDropdown = [
 ]
 
 export const friendsDropdown = [
-    {
-        content: 'Unblokir Teman',
-        isSidebar : false,
-        },{
+       {
         content: 'Blokir Teman',
         isSidebar : false,
         }

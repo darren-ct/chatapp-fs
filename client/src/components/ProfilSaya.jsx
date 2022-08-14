@@ -1,21 +1,17 @@
 import { useState,useContext, useEffect} from "react"
 import { AppContext } from "../App";
-import ProfilSayaForm from "./ProfilSayaForm";
+import { ChatContext } from "./Chatbox";
 
-
-import success from "../assets/successful.svg";
 import ErrorModal from "./modals/ErrorModal";
 import {TailSpin} from "react-loader-spinner"
+import ProfilSayaForm from "./ProfilSayaForm";
 
-
-
+import success from "../assets/successful.svg";
 import api from "../connection";
-
-
-
 
 const ProfilSaya = ({closeSidebar,successMsg,setSuccessMsg}) => {
             const{token} = useContext(AppContext);
+            const{setSidebarContent} = useContext(ChatContext);
  
             const [preset,setPreset] = useState("");
 
@@ -57,9 +53,10 @@ const ProfilSaya = ({closeSidebar,successMsg,setSuccessMsg}) => {
             };
 
             const resetSidebar = () => {
-                setSuccessMsg("");
+                setSidebarContent(null);
+                setSuccessMsg(null);
                 closeSidebar();
-            }
+            };
 
             
            //  if success

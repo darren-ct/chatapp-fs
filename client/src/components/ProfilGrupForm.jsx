@@ -1,21 +1,19 @@
 import {useState,useContext, useEffect} from "react";
 import { AppContext } from "../App";
-
-import searchIcon from "../assets/search.svg";
-import editIcon from "../assets/editimage.png";
-import success from "../assets/successful.svg";
+import { MessageContext } from "./Messagebox";
 
 import Input from "./basic/Input";
 import Button from "./basic/Button";
 import {TailSpin} from "react-loader-spinner"
 import { StyledUserCard } from "../core-ui/UserCard.style";
 
+import searchIcon from "../assets/search.svg";
 import api from "../connection";
-
 
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { MainContext } from "../pages/Main";
 
 const schema = yup.object().shape({
   name : yup.string().min(3).required("Name is required"),
@@ -23,15 +21,15 @@ const schema = yup.object().shape({
 });
 
 
-
-const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}) => {
+const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
   const {token,user} = useContext(AppContext);
-
+  const {getChats,setFilter} = useContext(MainContext);
+  const {getMessages} = useContext(MessageContext);
+  
   const {register, handleSubmit,formState:{errors}} = useForm({
     resolver: yupResolver(schema),
     defaultValues: preset
    });
-
   // States
   const[friends,setFriends] = useState([]);
   const[members,setMembers] = useState([]);
@@ -42,25 +40,21 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
   const[search1,setSearch1] = useState("")
   const[search2,setSearch2] = useState("");
   
+  const[image,setImage] = useState(preset.image);
+  const[form,setForm] = useState({image:{value:null}});
 
-   const[image,setImage] = useState(preset.image);
-   const[form,setForm] = useState({image:{value:null}});
+  const[uploadLoader,setUploadLoader] = useState(false);
 
-   const[uploadLoader,setUploadLoader] = useState(false);
-
-   
-
-   const terpilih = friends.reduce((total,item)=>{
+  const terpilih = friends.reduce((total,item)=>{
 
     if(item.isChecked === true){
        return total + 1
     } else {
        return total
     };
-},0);
+  },0);
 
   // useEffect
-  
   useEffect(()=>{
         getGroupMembers();
   },[search1])
@@ -104,10 +98,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
   }
   );
 };
-
   // CRUD
-
-
   const getFriends = async() => {
 
     try {
@@ -179,7 +170,6 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
   const onSubmit = async(data) => {
     setErrMsg("");
 
-  
     const formData = new FormData();
 
     if(form.image.value){
@@ -193,12 +183,18 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
 
       setUploadLoader(true);
 
-        await api.put(`/group/${id}`, formData ,{
-          headers: {'Authorization':`Bearer ${token}`}
-          });
+      await api.put(`/group/${id}`, formData ,{
+      headers: {'Authorization':`Bearer ${token}`}
+      });
+
+
+      getMessages();
+      getChats();
+      setFilter("pesan");
 
       setUploadLoader(false);
       setSuccessMsg("Group profile changed!");
+
 
     } catch(err) {
      console.log(err)
@@ -207,14 +203,20 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
     
   };
 
-  const kickMember = async(friendId) => {
+  const kickMember = async(friendId,name) => {
 
     try {
-         await api.delete(`/member?room=${id}&id=${friendId}`,{
+
+        setUploadLoader(true);
+
+         await api.delete(`/member?room=${id}&id=${friendId}&name=${name}`,{
           headers: {'Authorization':`Bearer ${token}`}
          });
 
+         setUploadLoader(false);
+
          setSuccessMsg("Member kicked");
+         getMessages();
          
 
     } catch(err) {
@@ -231,14 +233,20 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
 
     try {
 
+      setUploadLoader(true);
+
       await api.post(`/invitation`,{
         roomId : id,
-        friendIds : inviteIds
+        friendIds : inviteIds,
+
       },{
        headers: {'Authorization':`Bearer ${token}`}
       });
 
+      setUploadLoader(false);
+
       setSuccessMsg("Friend Invited");
+      getMessages();
       
 
  } catch(err) {
@@ -247,14 +255,14 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
   }
 
   // Render
-  const renderButton = (memberRole,memberId) => {
+  const renderButton = (memberRole,memberId,memberName) => {
 
     if(role === "Owner" && user.user_id != memberId){
-      return <Button styling="primary" content="Kick" onPress={()=>{kickMember(memberId)}}/> 
+      return <Button styling="primary" content="Kick" onPress={()=>{kickMember(memberId,memberName)}}/> 
     };
 
     if(role === "Admin" && memberRole !== "Owner" && user.user_id != memberId ){
-      return <Button styling="primary" content="Kick" onPress={()=>{kickMember(memberId)}}/> 
+      return <Button styling="primary" content="Kick" onPress={()=>{kickMember(memberId,memberName)}}/> 
     }
   };
 
@@ -271,7 +279,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
               </div>
               <div className="right-side">
                 
-                  {renderButton(member.roles,member.id)}
+                  {renderButton(member.roles,member.id,member.username)}
                   
               </div>
         </StyledUserCard>
@@ -298,7 +306,6 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
       </div>
      )
   };
-
   // LOADER
   if(uploadLoader){
     return (
@@ -307,6 +314,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,getGroupProfile,id}
         </div>
          )
 }
+
 
 return (
 <>

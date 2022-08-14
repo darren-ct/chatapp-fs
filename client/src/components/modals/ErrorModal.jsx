@@ -1,4 +1,5 @@
 import { StyledErrorModal } from "../../core-ui/modals/ErrorModal.style"
+
 import error from "../../assets/error.svg"
 
 const ErrorModal = ({isShown,message}) => {

@@ -1,4 +1,5 @@
 import { StyledNotificationModal } from "../../core-ui/modals/NotificationModal.style"
+
 import success from "../../assets/success.png"
 
 const NotificationModal = ({isShown,message}) => {

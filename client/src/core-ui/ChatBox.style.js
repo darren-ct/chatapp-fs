@@ -2,10 +2,10 @@ import styled from "styled-components";
 
 export const StyledChatBox = styled.div`
      position: relative;
-     height: 100vh;
      display: flex;
      flex-direction: column;
      width: 420px;
+     height: 100vh;
      border: 1px solid rgba(108,92,231,.2);
 
      header{
@@ -16,30 +16,35 @@ export const StyledChatBox = styled.div`
 
         .chat-profile{
             cursor: pointer;
+
             width: 48px;
             height: 48px;
+
             border: 1px solid transparent;
             border-radius:100vh;
-            object-fit: cover;
-            background-color: rgba(217,217,217,.3);
+
             margin-right: 208px;
 
+            object-fit: cover;
+            background-color: rgba(217,217,217,.3);
         };
 
         .add-btn{
+            position: relative;
             border: none;
             background-color: transparent;
             appearance: none;
+            margin-right: 54px;
+
             color:#6C5CE7 ;
             font-size: 36px;
-            margin-right: 54px;
+
             cursor: pointer;
-            position: relative;
         };
 
         .other-btn{
-            cursor: pointer;
             width: 32px;
+            cursor: pointer;
         }
 
      };
@@ -48,8 +53,6 @@ export const StyledChatBox = styled.div`
         display: flex;
         flex-direction: column;
         padding: 12px;
-
-
 
         .search-control{
             position: relative;
@@ -97,13 +100,14 @@ export const StyledChatBox = styled.div`
 
      .chats-section{
         position: relative;
+        flex: 1;
+
         border-top: 1px solid rgba(108,92,231,.2);
+
         overflow-y: scroll;
         -ms-overflow-style: none;  
-         scrollbar-width: none;  
-         flex: 1;
+        scrollbar-width: none;  
          
-
          .chats{
             display: flex;
             flex-direction: column;

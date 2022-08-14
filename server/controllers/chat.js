@@ -16,10 +16,9 @@ const getChats = async(req,res) => {
     if(!isPinned){
 
      queryChat = `
-    SELECT profile_image, user_friend.display_name, user.user_id ,  chat_room.room_id, isPinned ,COUNT(message.room_id) AS notif , 
+    SELECT profile_image, isOnline , user_friend.display_name, user.user_id ,  chat_room.room_id, isPinned ,COUNT(message.room_id) AS notif , 
     TIME(MAX(message.createdAt)) AS last_time, DATE(MAX(message.createdAt)) AS last_date
     
-   
     FROM user_chat INNER JOIN chat_room
     ON user_chat.room_id = chat_room.room_id AND user_chat.user_id = ${userID}
 
@@ -32,12 +31,11 @@ const getChats = async(req,res) => {
     INNER JOIN user_friend
     ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID}
     
-
     INNER JOIN message
     ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false' 
 
     GROUP BY message.room_id
-    ORDER BY isPinned, last_time DESC
+    ORDER BY last_time, last_date ,isPinned DESC
     `;
 
      queryGroup = `
@@ -57,7 +55,7 @@ const getChats = async(req,res) => {
    
     } else {
        queryChat = `
-       SELECT profile_image, user_friend.display_name, user.user_id ,  chat_room.room_id ,COUNT(message.room_id) AS notif , 
+       SELECT profile_image, isOnline, user_friend.display_name, user.user_id ,  chat_room.room_id ,COUNT(message.room_id) AS notif , 
        TIME(MAX(message.createdAt)) AS last_time, DATE(MAX(message.createdAt)) AS last_date
        
        FROM user_chat INNER JOIN chat_room
@@ -167,11 +165,11 @@ try {
 
 const pinChat = async(req,res) => {
     const userId = req.user.id;
-
-    const {isGroup,roomId,friendId} = req.body;
+    const roomId = req.params.id;
+    const {isGroup} = req.body;
 
     try {
-        if(isGroup){
+        if(isGroup === "true"){
             await UserGroup.update({
                 isPinned : "true"
             },{
@@ -186,8 +184,7 @@ const pinChat = async(req,res) => {
             },{
                 where : {
                     user_id : userId,
-                    room_id : roomId,
-                    friend_id : friendId
+                    room_id : roomId
                 }
             })
         };
@@ -202,11 +199,11 @@ const pinChat = async(req,res) => {
 
 const unpinChat = async(req,res) => {
     const userId = req.user.id;
-
-    const {isGroup,roomId,friendId} = req.body;
+    const roomId = req.params.id;
+    const {isGroup} = req.body;
 
     try {
-        if(isGroup){
+        if(isGroup === "true"){
             await UserGroup.update({
                 isPinned : "false"
             },{
@@ -221,8 +218,7 @@ const unpinChat = async(req,res) => {
             },{
                 where : {
                     user_id : userId,
-                    room_id : roomId,
-                    friend_id : friendId
+                    room_id : roomId
                 }
             })
         };

@@ -54,7 +54,7 @@ export const StyledMessageBox = styled.div`
                 width: 12px;
                 height: 12px;
                 border-radius: 100vh;
-                bottom: 0px;
+                bottom: 6px;
                 left: -48px;
             };
 

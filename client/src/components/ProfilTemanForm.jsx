@@ -1,5 +1,7 @@
-import {useState,useContext, useEffect} from "react";
+import {useState,useContext} from "react";
 import { AppContext } from "../App";
+import { MainContext } from "../pages/Main";
+import { MessageContext } from "./Messagebox";
 
 
 import Input from "./basic/Input";
@@ -7,7 +9,6 @@ import Button from "./basic/Button";
 import {TailSpin} from "react-loader-spinner"
 
 import api from "../connection";
-
 
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -18,50 +19,43 @@ const schema = yup.object().shape({
   });
 
 
-const ProfilTemanForm = ({preset,setErrMsg,setSuccessMsg,getFriendProfile,id}) => {
+const ProfilTemanForm = ({preset,setErrMsg,setSuccessMsg,id}) => {
        const{token} = useContext(AppContext);
+       const{getChats,setFilter} = useContext(MainContext)
+       const{setProfile} = useContext(MessageContext)
 
-       const {register, handleSubmit,formState:{errors},reset} = useForm({
+       const {register, handleSubmit,formState:{errors}} = useForm({
         resolver: yupResolver(schema),
         defaultValues: preset
        });
 
-
       const[uploadLoader,setUploadLoader] = useState(false);
-
 
     //  Function
     const onSubmit = async(data) => {
-
         setErrMsg("");
 
        try {
-
         setUploadLoader(true)
-
-        await api.put(`/profile/${id}`, {name:data.name} , {
+        const res = await api.put(`/profile/${id}`, {name:data.name} , {
             headers: {'Authorization':`Bearer ${token}`}
         })
-
+      
+        setProfile(res.data.data.profile);
         setUploadLoader(false);
-        reset();
-
-        getFriendProfile();
+      
         setSuccessMsg("Profile changed!");
 
+        getChats()
+        setFilter("pesan");
+        
        } catch (err) {
-
         console.log(err)
         const payload = err.response.data;
         const message = payload.message;
-
         setErrMsg(message)
        }
-
     };
-
-   
-
 
     // LOADER
     if(uploadLoader){

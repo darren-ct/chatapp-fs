@@ -2,14 +2,12 @@ import {useState,useContext, useEffect} from "react";
 import { AppContext } from "../App";
 import { ChatContext } from "./Chatbox";
 
-import editIcon from "../assets/editimage.png";
-
 import Input from "./basic/Input";
 import Button from "./basic/Button";
 import {TailSpin} from "react-loader-spinner"
 
+import editIcon from "../assets/editimage.png";
 import api from "../connection";
-
 
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -46,10 +44,6 @@ const ProfilSayaForm = ({preset,setErrMsg,setSuccessMsg,getMyProfile}) => {
             }
       },[form])
 
-      useEffect(()=>{
-       setProfile(preset.image)
-      },[preset])
-
     //  Function
     const onSubmit = async(data) => {
 
@@ -69,23 +63,17 @@ const ProfilSayaForm = ({preset,setErrMsg,setSuccessMsg,getMyProfile}) => {
 
         setUploadLoader(true)
 
-        await api.put("/myprofile", formData , {
+       const res =  await api.put("/myprofile", formData , {
             headers: {'Authorization':`Bearer ${token}`}
         })
 
+        setProfile(res.data.data.image);
+
         setUploadLoader(false);
-        reset();
-
-        setImage(null);
-        setForm({image:{value:null}})
-        getMyProfile();
-
-
         setSuccessMsg("Profile changed!");
 
        } catch (err) {
 
-        console.log(err)
         const payload = err.response.data;
         const message = payload.message;
 
@@ -105,7 +93,6 @@ const ProfilSayaForm = ({preset,setErrMsg,setSuccessMsg,getMyProfile}) => {
 
         setImage(URL.createObjectURL(e.target.files[0]));
     };
-
 
     // LOADER
     if(uploadLoader){

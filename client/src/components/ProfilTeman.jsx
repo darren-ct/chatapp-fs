@@ -1,16 +1,19 @@
-import { useState,useContext,useEffect } from "react";
+import { useState,useContext,useLayoutEffect } from "react";
 import { AppContext } from "../App";
-import ProfilTemanForm from "./ProfilTemanForm";
+import { MessageContext } from "./Messagebox";
 
-import success from "../assets/successful.svg";
+import ProfilTemanForm from "./ProfilTemanForm";
 import ErrorModal from "./modals/ErrorModal";
 import {TailSpin} from "react-loader-spinner";
+
+import success from "../assets/successful.svg";
 
 import api from "../connection";
 
 
 const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
     const{token} = useContext(AppContext);
+    const{setSidebarContent} = useContext(MessageContext)
 
     const[preset,setPreset] = useState("");
 
@@ -19,8 +22,9 @@ const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
     const[profileLoader,setProfileLoader] = useState(false);
 
     // useEffect 
-    useEffect(()=>{
-          getFriendProfile()
+    useLayoutEffect(()=>{
+          getFriendProfile();
+          setSuccessMsg("");
     },[])
 
     // Function
@@ -52,6 +56,7 @@ const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
     const resetSidebar = () => {
             setSuccessMsg("");
             closeSidebar();
+            setSidebarContent(null)
         }
 
     //  if success
@@ -79,7 +84,7 @@ const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
   return (
     <>
     <ErrorModal isShown={errMsg ? true : false} message={errMsg} />
-    { preset && <ProfilTemanForm preset={preset} setErrMsg={setErrMsg} setSuccessMsg={setSuccessMsg} getFriendProfile={getFriendProfile} id={id}/> }
+    { preset && <ProfilTemanForm preset={preset} setErrMsg={setErrMsg} setSuccessMsg={setSuccessMsg} id={id}/> }
     </>
   )
 }

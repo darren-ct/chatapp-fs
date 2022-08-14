@@ -6,7 +6,6 @@ position: fixed;
 top:0px;
 left: 0px;
 z-index: -1;
-
 }
 
 #right{
@@ -39,9 +38,9 @@ z-index: -1;
     }
 
     p{
+        max-width:312px;
         margin: 12px 0 36px 0;
         color: #3C2CB4;
-        max-width:312px;
         font-size: 18px;
     }
 

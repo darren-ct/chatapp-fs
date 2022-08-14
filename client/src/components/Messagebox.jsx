@@ -1,11 +1,17 @@
+import { useEffect, useState, useContext,useRef,createContext } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { AppContext } from "../App";
+import { MainContext } from "../pages/Main";
+
+import NotificationModal from "./modals/NotificationModal";
 import Tabbar from "../components/advanced/Tabbar";
 import Dropdown from "./advanced/Dropdown";
 import Sidebar from "./Sidebar";
-
-import { useEffect, useState, useContext,useRef } from "react";
-import { AppContext } from "../App";
-import { StyledMessageBox } from "../core-ui/MessageBox.style";
 import Message from "../components/advanced/Message"
+import {TailSpin} from "react-loader-spinner"
+
+import { StyledMessageBox } from "../core-ui/MessageBox.style";
 
 import dots from "../assets/whitedots.svg";
 import send from "../assets/send.svg";
@@ -14,15 +20,14 @@ import image from "../assets/images.svg";
 import person from "../assets/contacts.svg";
 import api from "../connection";
 
-import {TailSpin} from "react-loader-spinner"
-
 import {friendDropdown,groupDropdown} from "../helpers/variables"
 
+export const MessageContext = createContext(null);
 
-
-
-const Messagebox = ({clickedChat,type}) => {
+const Messagebox = () => {
   const{token} = useContext(AppContext);
+  const {setFilter,clickedChat,type,getChats} = useContext(MainContext);
+  const navigate = useNavigate()
 
   // STATES
       // Drops 
@@ -32,13 +37,10 @@ const Messagebox = ({clickedChat,type}) => {
   const[sidebar,setSidebar] = useState(false);
   const[sidebarContent,setSidebarContent] = useState(null);
  
-
       // Tabs
   const[isShown,setIsShown] = useState(false);
   const [ listType,setListType] = useState(null)
   const [others,setOthers] = useState([]);
-
-     
 
     // Messages
   const [profile,setProfile] = useState(null);
@@ -50,15 +52,20 @@ const Messagebox = ({clickedChat,type}) => {
 
   const [mainLoading,setMainLoading] = useState(false);
 
-
- 
+    // Modals
+  const[notif,setNotif] = useState("");
 
   // UseEffect 
   useEffect(()=>{
 
     if(clickedChat){
         getMessages();
-    }
+    };
+
+    setOtherDrop(false);
+    setSidebar(false);
+    setSidebarContent(null);
+
   },[clickedChat])
 
   useEffect(()=>{
@@ -97,7 +104,6 @@ const Messagebox = ({clickedChat,type}) => {
     
   }
 
-
   const onChange = (e) => {
     setMsgForm(e.target.value)
   };
@@ -124,21 +130,19 @@ const Messagebox = ({clickedChat,type}) => {
           setMainLoading(false);
  
           const payload = res.data.data;
-
-          
           const NewMessages = payload.messages;
           const Profile = payload.profile[0];
-
-          
+              
           setProfile(Profile);
           setMessages(NewMessages);
           
        
          } catch(err) {
-          console.log(err)
+           
+          navigate("/error")
+
           }
   };
-
 
   const sendMessage = async(e) => {
          e.preventDefault();
@@ -155,61 +159,69 @@ const Messagebox = ({clickedChat,type}) => {
            });
 
           getMessages();
+          getChats();
+          setMsgForm("");
+          setFilter("pesan")
        
          } catch(err) {
-          console.log(err)
+          
+          navigate("/error")
           }
 
 
   };
 
-
-
- 
   return (
-    <StyledMessageBox>
-        
-        <Sidebar closeSidebar={toggleSidebar} sidebar={sidebar} position="right" content={sidebarContent} contentId={clickedChat} type={type}/>
+  <MessageContext.Provider value={{setProfile,getMessages,setSidebarContent}}>
+      <StyledMessageBox>
+        <NotificationModal isShown={notif ? true : false} message={notif}/> 
+        <Sidebar closeSidebar={toggleSidebar} sidebar={sidebar} position="right" content={sidebarContent} setContent={setSidebarContent} />
 
-
-    {!clickedChat? 
-    <p className="empty-message">Please click one of your chats.</p> : 
-    (
-      <>
-      <header>
-                <img  onClick={()=>{setSidebar(true); if(type === "single") {setSidebarContent("Lihat profil kontak")}else{setSidebarContent("Lihat profil grup")}}}  src={!profile ? "" : type === "group" && profile.image ? profile.image :  profile.profile_image ? profile.profile_image : ""} className="msg-profile" alt=""/>
+         {!clickedChat? 
+         <p className="empty-message">Please click one of your chats.</p> : 
+         (
+         <>
+           <header>
+                <img  onClick={()=>{setSidebar(true); 
+                if(type === "single") {setSidebarContent("Lihat profil kontak")}
+                else{setSidebarContent("Lihat profil grup")}}}  
+                src={!profile ? "" : type === "group" && profile.image ?
+                 profile.image :  profile.profile_image ? profile.profile_image : ""} 
+                 className="msg-profile" alt=""/>
 
                 <div className="msg-info">
                      {!profile ? "" : profile.isOnline === "true" && <div className="status-dot"></div> }
                      <div className="msg-name">{!profile ? "" : type === "group" ?  profile.group_name : profile.display_name}</div>
-                     <div className="msg-status">{!profile ? "" : type === "group" ? "" : profile.isOnline === "true" ? "online" : `Last online ${profile.hour}:${profile.minute} `}</div>
+                     <div className="msg-status">{!profile ? "" : type === "group" ? "" : profile.isOnline === "true" ? "online" : `Last online `}</div>
                 </div>
                 <div style={{position:"relative"}}>
-                     {!otherDrop ? "" : type === "single" ? <Dropdown items={friendDropdown}  id={clickedChat} toggleSidebar={toggleSidebar} setSidebarContent={setSidebarContent} /> : <Dropdown items={groupDropdown} id={clickedChat} toggleSidebar={toggleSidebar} setSidebarContent={setSidebarContent} />  }
+                     {!otherDrop ? "" : type === "single" ? 
+                     <Dropdown items={friendDropdown}  id={clickedChat} toggleSidebar={toggleSidebar} setSidebarContent={setSidebarContent} setNotif={setNotif} getMessages={getMessages} /> 
+                     : <Dropdown items={groupDropdown} id={clickedChat} toggleSidebar={toggleSidebar} setSidebarContent={setSidebarContent} setNotif={setNotif} getMessages={getMessages}/> }
                      <img src={dots} className="other-btn" onClick={toggleOtherDrop} alt=""/>
                 </div>
-        </header>
+           </header>
 
 
-        <section className="msg-section">
+           <section className="msg-section">
                   <div className="messages">
                   
                       { mainLoading ? 
                        <div className="dynamic"> <TailSpin height = "64" width = "64" radius = "9" color = '#6C5CE7' ariaLabel = 'three-dots-loading'  wrapperStyle wrapperClass /> </div>    : 
-                      messages ? messages.map(message => <Message key={message.message_id} message={message} type={type}/>) : ""}
+                      messages ? messages.map(message => <div key={message.message_id}> <Message key={message.message_id} message={message} type={type} setNotif={setNotif}/> </div>) : ""}
                       <div ref={messagesEndRef}></div>
                   </div>
-        </section>
+           </section>
 
 
-        <section className="msg-others">
+            <section className="msg-others">
                   <div className="others">
                           <Tabbar list={others} type={listType} isShown={isShown} />
                   </div>
-        </section>
+            </section>
 
 
-        <form className="msg-tab" onSubmit={sendMessage} >
+            <form className="msg-tab" onSubmit={sendMessage} >
                <img src={emo} onClick={()=>{toggleTab("emoticon")}} alt=""/>
                <img src={image} alt=""/>
                <img src={person} onClick={()=>{toggleTab("friend")}} alt=""/>
@@ -217,11 +229,12 @@ const Messagebox = ({clickedChat,type}) => {
                       <input value={msgForm} onChange={onChange} type="text" placeholder="Send message"/>
                       <img src={send} onClick={sendMessage} alt=""/>
                </div>
-        </form>
-        </>
+            </form>
+         </>
         )}
 
-    </StyledMessageBox>
+      </StyledMessageBox>
+  </MessageContext.Provider>
   )
 }
 

@@ -1,7 +1,5 @@
-import { StyledSidebar } from "../core-ui/Sidebar.style";
-import { AppContext } from "../App";
 import { useState,useContext} from "react";
-import backArrow from "../assets/backArrow.svg"
+import { MainContext } from "../pages/Main";
 
 import TambahTeman from "./TambahTeman";
 import TambahGrup from "./TambahGrup";
@@ -9,9 +7,15 @@ import ProfilSaya from "./ProfilSaya";
 import ProfilTeman from "./ProfilTeman";
 import ProfilGrup from "./ProfilGrup";
 
-const Sidebar = ({closeSidebar,sidebar,position,content,contentId}) => {
+import { StyledSidebar } from "../core-ui/Sidebar.style";
 
+import backArrow from "../assets/backArrow.svg"
+
+const Sidebar = ({closeSidebar,sidebar,position,content,setContent}) => {
+
+ const{clickedChat} = useContext(MainContext);
  const[successMsg,setSuccessMsg] = useState("");
+
 
 //  Functions
   const renderContent = (content) => {
@@ -29,22 +33,25 @@ const Sidebar = ({closeSidebar,sidebar,position,content,contentId}) => {
       // RIGHT
           // Chat
       case "Lihat profil kontak":
-             return <ProfilTeman closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg} id={contentId}/>
+             return <ProfilTeman closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg} id={clickedChat}/>
       break;
 
           //Group
       case "Lihat profil grup":
-            return <ProfilGrup closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg} id={contentId}/>
+            return <ProfilGrup closeSidebar={closeSidebar} successMsg={successMsg} setSuccessMsg={setSuccessMsg} id={clickedChat}/>
       break;
-
 
       //BOTH
       case "Ganti layar belakang":
             
       break;
+
+      case null:
+           return <div>empty</div>
+      break;
       
       default:
-        return ""
+        return 
     } 
   };
 
@@ -53,7 +60,7 @@ const Sidebar = ({closeSidebar,sidebar,position,content,contentId}) => {
 
     <div className={sidebar ? "sidebar" : "sidebar hide"}>
         <div className="sidebar-nav">
-            <img src={backArrow} onClick={()=>{closeSidebar();setSuccessMsg("")}}/>
+            <img src={backArrow} onClick={()=>{closeSidebar();setContent(null);setSuccessMsg(null)}}/>
             <span onClick={closeSidebar}>Kembali</span>
         </div>
 

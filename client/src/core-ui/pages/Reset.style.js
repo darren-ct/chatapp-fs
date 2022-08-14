@@ -29,8 +29,6 @@ z-index: -1;
     height: 230px;
 }
 
-
-
 `
 
 export default StyledReset;

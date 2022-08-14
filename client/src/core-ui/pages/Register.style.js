@@ -6,7 +6,6 @@ position: fixed;
 top:0px;
 left: 0px;
 z-index: -1;
-
 }
 
 #right{
@@ -29,15 +28,9 @@ z-index: -1;
     height: 230px;
 }
 
-
-
 button {
     margin-top: 12px
 }
-
-
-
-
 `
 
 export default StyledRegister;

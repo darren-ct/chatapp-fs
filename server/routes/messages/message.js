@@ -5,7 +5,7 @@ const { sendMessage, deleteMessage,likeMessage} = require("../../controllers/mes
 
 router.put("/like/:id",likeMessage)
 router.post("/", sendMessage); // send message
-router.delete("/:id", deleteMessage) // delete for me
+router.delete("/", deleteMessage) // delete for me
 
 
 module.exports = router;

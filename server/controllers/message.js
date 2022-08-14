@@ -40,7 +40,7 @@ const getMessages = async(req,res) => {
          DATE(message.createdAt) AS date,
          TIME(message.createdAt) AS time
          FROM message INNER JOIN profile
-         ON message.sender_id = profile.user_id AND message.room_id = ${roomId} AND message.owner_id = ${userId}
+         ON message.sender_id = profile.user_id AND message.room_id = ${roomId} AND ( message.owner_id = ${userId} OR message.owner_id = 16 OR message.owner_id = 17)
          LEFT JOIN user_friend
          ON user_friend.friend_id = profile.user_id AND user_friend.user_id = ${userId}
          ORDER BY message.createdAt ASC
@@ -64,7 +64,7 @@ const getMessages = async(req,res) => {
         TIME(createdAt) AS time,
         DAY(createdAt) AS day
         FROM group_message INNER JOIN profile
-        ON group_message.sender_id = profile.user_id AND group_message.room_id = ${roomId} AND group_message.owner_id = ${userId} 
+        ON group_message.sender_id = profile.user_id AND group_message.room_id = ${roomId} AND group_message.owner_id IN ( ${userId} , 16 , 17 )
         LEFT JOIN user_friend
         ON user_friend.friend_id = profile.user_id AND user_friend.user_id = ${userId}
         ORDER BY group_message.createdAt ASC
@@ -159,9 +159,7 @@ const sendMessage = async(req,res) => {
       const userId = req.user.id;
       const {isGroup,roomId,message,replying,isForwarded} = req.body;
 
-      console.log(message)
-
-
+      
       try {
 
        
@@ -199,6 +197,31 @@ const sendMessage = async(req,res) => {
           })
         };
 
+        // Check is it the first message of the day
+        const now = new Date();
+        const today = now.getDate();
+
+        const query = `SELECT message.message_id FROM
+        message WHERE owner_id = 16 
+        AND room_id = ${roomId}
+        AND DAY(message.createdAt) = ${today}`;
+
+        const timeBotMessages = await sequelize.query(
+          query , {type:QueryTypes.SELECT}
+       );
+
+      //  BOT MESSAGE!!
+       if(timeBotMessages.length === 0){
+           await Message.create({
+              room_id : roomId,
+              sender_id : 16,
+              owner_id : 16,
+              body : now.getDate() + "/" +  ( now.getMonth() + 1 ) + "/" + now.getFullYear(),
+              replying : null,
+              isForwarded : "false"
+           })
+       }
+
       // Create 2 messages
       const newMsg =  await Message.create({
         room_id : roomId,
@@ -231,6 +254,31 @@ const sendMessage = async(req,res) => {
         if(isConnected.length === 0){
           return sendErr("Unauthorized",res)
         }
+
+        // Check is it the first message of the day
+        const now = new Date();
+        const today = now.getDate();
+
+        const query1 = `SELECT group_message.message_id FROM
+        group_message WHERE owner_id = 16 
+        AND room_id = ${roomId}
+        AND DAY(group_message.createdAt) = ${today}`;
+
+        const timeBotMessages = await sequelize.query(
+          query1 , {type:QueryTypes.SELECT}
+       );
+
+      //  BOT MESSAGE!!
+       if(timeBotMessages.length === 0){
+           await GroupMessage.create({
+              room_id : roomId,
+              sender_id : 16,
+              owner_id : 16,
+              body : now.getDate() + "/" +  ( now.getMonth() + 1 ) + "/" + now.getFullYear(),
+              replying : null,
+              isForwarded : "false"
+           })
+       }
 
         // send message
          const newMessage = await GroupMessage.create({
@@ -282,13 +330,14 @@ const sendMessage = async(req,res) => {
 };
 
 const deleteMessage = async(req,res) => {
-  const messageId = req.params.id;
   const userId = req.user.id;
-  const {isGroup} = req.body; 
+  const {isGroup,messageId} = req.query; 
+
+  console.log(req.query);
 
   try {
 
-    if(!isGroup){
+    if(isGroup !== "true"){
        await Message.destroy({where:{owner_id:userId,message_id:messageId}})
 
     } else {
@@ -300,6 +349,7 @@ const deleteMessage = async(req,res) => {
       });
 
   } catch(err) {
+    console.log(err);
     return sendErr("Server error",res)
   }
 
@@ -307,12 +357,12 @@ const deleteMessage = async(req,res) => {
 
 // Group
 const unsendMessage = async(req,res) => {
-  const messageId = req.params.id;
   const userId = req.user.id;
-  const {isGroup} = req.body.isGroup;
+  const {isGroup,messageId} = req.query;
+  console.log(req.query)
 
   try {
-     if(isGroup){
+     if(isGroup === "true"){
        await GroupMessage.destroy({where:{sender_id:userId,message_id:messageId}});
        await GroupMessage.destroy({where:{sender_id:userId,refering:messageId}});
 
@@ -329,6 +379,7 @@ const unsendMessage = async(req,res) => {
       });
 
       } catch(err) {
+        console.log(err)
         return sendErr("Server error",res)
      }
 

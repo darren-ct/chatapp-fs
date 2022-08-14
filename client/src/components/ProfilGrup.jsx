@@ -1,33 +1,31 @@
 import { useState,useContext,useEffect } from "react";
 import { AppContext } from "../App";
+import { MessageContext } from "./Messagebox";
+
 import ProfilGrupForm from "../components/ProfilGrupForm";
+import {TailSpin} from "react-loader-spinner";
+import ErrorModal from "./modals/ErrorModal";
 
 import success from "../assets/successful.svg";
-import ErrorModal from "./modals/ErrorModal";
-import {TailSpin} from "react-loader-spinner";
-
 import api from "../connection";
-
 
 const ProfilGrup = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
   const {token} = useContext(AppContext);
+  const {setSidebarContent} = useContext(MessageContext)
 
   const[role,setRole] = useState([]);
   const[preset,setPreset] = useState("");
-
-
 
   // Dynamic states
   const[errMsg,setErrMsg] = useState("");
   const[profileLoader,setProfileLoader] = useState(false);
   
-
   // UseEffect
   useEffect(()=>{
         getGroupProfile();
   },[]);
 
-  //function
+  //Function
   const getGroupProfile = async() => {
     try {
                 
@@ -55,14 +53,11 @@ const ProfilGrup = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
       }
   };
 
- 
-
   const resetSidebar = () => {
     setSuccessMsg("");
     closeSidebar();
+    setSidebarContent(null)
   }
-
-
 
     //  if success
     if(successMsg){
@@ -84,14 +79,12 @@ const ProfilGrup = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
              )
     };
 
-  
-
 return (
   <>
-  <ErrorModal isShown={errMsg ? true : false} message={errMsg} />
-  { preset && <ProfilGrupForm preset={preset} setErrMsg={setErrMsg} setSuccessMsg={setSuccessMsg}  
-  id={id} role={role} getGroupProfile={getGroupProfile} 
-  /> }
+     <ErrorModal isShown={errMsg ? true : false} message={errMsg} />
+     { preset && <ProfilGrupForm preset={preset} setErrMsg={setErrMsg} 
+      setSuccessMsg={setSuccessMsg} id={id} role={role} 
+     /> }
   </>
 )
 }

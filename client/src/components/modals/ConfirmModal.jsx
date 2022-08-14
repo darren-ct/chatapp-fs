@@ -1,6 +1,6 @@
-import {StyledConfirmModal} from "../../core-ui/modals/ConfirmModal.style";
 import Button from "../basic/Button";
 
+import {StyledConfirmModal} from "../../core-ui/modals/ConfirmModal.style";
 
 const ConfirmModal = ({id,deleteRow,setIsModal}) => {
   return (

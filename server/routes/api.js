@@ -12,9 +12,10 @@ const { getProfile, getMyProfile, editMyProfile,editProfile} = require("../contr
 
 
 // Message Related
+router.delete("/unsend", unsendMessage);
 router.use("/messages", require("./messages/messages.js")); 
-router.use("/message", uploadFile("image") , require("./messages/message.js"));
-router.delete("/unsend/:id", unsendMessage);
+router.use("/message" , require("./messages/message.js"));
+
 
 
 // Group related
@@ -27,12 +28,11 @@ router.get("/nonmembers/:id",getNonMembers)
 router.use("/member", require("./members/member"))
 
 
-
 // Friend related
 router.get("/friends",getFriends) // friend list & bisa kirim body param isBlocked=true
 router.post("/friend",addFriend) // add friend 
 router.put("/friend/:id",changeDisplay)  // change friends display name
-router.put("/block/:id",blockFriend) //block friend 
+router.put("/block",blockFriend) //block friend 
 router.put("/unblock/:id",unblockFriend) // unblock friend
 router.get("/users",getUsers)
 

@@ -2,21 +2,24 @@ import { useState,useEffect,useContext} from "react"
 import { AppContext } from "../App";
 import { ChatContext } from "./Chatbox";
 
-import searchIcon from "../assets/search.svg";
-import success from "../assets/successful.svg"
-import { StyledUserCard } from "../core-ui/UserCard.style";
 import {TailSpin} from "react-loader-spinner"
 import Button from "./basic/Button"
+
+import { StyledUserCard } from "../core-ui/UserCard.style";
+
+import searchIcon from "../assets/search.svg";
+import success from "../assets/successful.svg";
 import api from "../connection";
 
 
 const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
     const{token} = useContext(AppContext);
-    const{getFriends,setFilter} = useContext(ChatContext);
+    const{getFriends,setFilter,setSidebarContent} = useContext(ChatContext);
 
     // States
     const[search,setSearch] = useState("")
     const[users,setUsers] = useState([])
+
     const[usersLoader,setUsersLoader] = useState(false) 
     const[uploadLoader,setUploadLoader] = useState(false);
 
@@ -24,9 +27,6 @@ const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
     useEffect(()=>{
         getUsers();
     },[search])
-
-
-
 
     // Functions
     const addFriend = async(id) => {
@@ -43,6 +43,7 @@ const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
            )
  
            setUploadLoader(false)
+
            setSuccessMsg("Friend Added")
            getFriends();
            setFilter("teman")
@@ -100,10 +101,9 @@ const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
     };
 
     const resetSidebar = () => {
-
         closeSidebar();
-        setSuccessMsg("");
-        setSearch("")
+        setSidebarContent(null);
+        setSuccessMsg(null);
     }
 
     if(successMsg){

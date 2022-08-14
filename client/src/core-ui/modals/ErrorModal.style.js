@@ -4,17 +4,19 @@ export const StyledErrorModal = styled.div`
 position: fixed;
 top: 8px;
 left: 50%;
-border-radius: 8px;
-border: white 1px solid;
+z-index: 150;
 
 display: flex;
 align-items: center;
 justify-content: center;
 
-
-background-color: #FF4C41;
 padding: 12px 12px 12px 12px;
 min-width: 300px;
+border-radius: 8px;
+border: white 1px solid;
+
+background-color: #FF4C41;
+
 
 img {
     margin-right: 24px;

@@ -1,54 +1,54 @@
 import { useState,useEffect,useContext,createContext,useLayoutEffect} from "react";
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
+import { MainContext } from "../pages/Main";
 
 import { StyledChatBox } from "../core-ui/ChatBox.style"
-import Dropdown from "../components/advanced/Dropdown";
-import { chatDropdown, friendsDropdown } from "../helpers/variables";
-import { addDropdown,otherDropdown } from "../helpers/variables";
+
 import Sidebar from "./Sidebar";
-
-
-import {StyledChatBoxCards} from "../core-ui/ChatBoxCards.style"
+import Undangan from "./chat/Undangan";
+import Grup from "./chat/Grup";
+import Pin from "./chat/Pin";
+import Blokiran from "./chat/Blokiran";
+import Teman from "./chat/Teman";
+import Pesan from "./chat/Pesan";
+import { TailSpin } from "react-loader-spinner";
+import Dropdown from "../components/advanced/Dropdown";
 
 import searchImg from "../assets/search.svg";
 import dots from "../assets/threedots.svg";
-import { TailSpin } from "react-loader-spinner";
 
+import { addDropdown,otherDropdown } from "../helpers/variables";
 import api from "../connection";
-import Button from "./basic/Button";
-import { getChatTime } from "../helpers";
+import NotificationModal from "./modals/NotificationModal";
 
 
 export const ChatContext = createContext(null)
 
-const Chatbox = ({setClickedChat,setType}) => {
+const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filter,setFilter,getChats,getGroups,getPins}) => {
+  const navigate = useNavigate();
   const{token}=useContext(AppContext);
+  const{setClickedChat} = useContext(MainContext);
 
   // States
           // Header
   const [profile,setProfile] = useState("");
 
-          // Filter and Search
-  const [filter,setFilter] = useState("pesan")
-  const [search,setSearch] = useState("");
-          
-          // List
-  const[list,setList] = useState([]);
-  const[loadingList,setLoadingList] = useState(false);
-
-          // Sidebar and Drop
+          // Sidebar and Dropdown
   const[sidebar,setSidebar] = useState(false);
   const[sidebarContent,setSidebarContent] = useState(null);
   
   const[showAddDrop,setShowAddDrop] = useState(false);
   const[showOtherDrop,setShowOtherDrop] = useState(false);
 
+        // Modals
+  const[notif,setNotif] = useState(false);
+
 
   // useEffect
   useEffect(()=>{
     getImage();
   },[]);
-
 
   useLayoutEffect(()=>{
 
@@ -77,114 +77,35 @@ const Chatbox = ({setClickedChat,setType}) => {
     default:
          getChats()
     }
-
-    
   },[filter,search])
 
-
-  
   // Functions
             //  Tampilan
   const renderBox = (item) => {
 
     switch(filter){
-           
-
       case "pesan" :
-
-            return (
-            <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType(item.type)}}>
-            <StyledChatBoxCards>
-            <Dropdown items={chatDropdown} roomId={item.room_id}/>
-                  <img src={item.profile_image} />
-                  <div className="name">{item.display_name}</div>
-                  <div className="time">{getChatTime(item.last_date,item.last_time)}</div>
-                  <div className="notif">{item.notif}</div>
-            </StyledChatBoxCards>
-            </div>
-                   )
+          return  <Pesan item={item} />
       break;
-
 
       case "teman":
-            return (
-            <div key={item.friend_id} onClick={()=>{startChat(item.friend_id);setType("single")}}>
-              
-              <StyledChatBoxCards>
-                  <Dropdown items={friendsDropdown} friendId={item.friend_id} />
-                  <img src={item.profile_image ? item.profile_image : ""}/>
-                  <div className="name">{item.display_name}</div>
-              </StyledChatBoxCards>
-            </div>
-            )
+            return <Teman item={item} startChat={startChat} getFriends={getFriends}/>
       break; 
-
 
       case "blokiran":
-             return (
-              <div key={item.friend_id}>
-              <StyledChatBoxCards>
-                  <img src={item.profile_image ? item.profile_image : ""}/>
-                  <div className="name">{item.display_name}</div>
-                  <Button content="Unblock" styling="secondary" onPress={async()=>{
-                      try { 
-                        await api.put(`/unblock/${item.friend_id}`,{},{
-                         headers: {'Authorization':`Bearer ${token}`}
-                         }) 
-                        getBlocked();
-                        }
-                      catch(err) {
-                        console.log(err)
-                      }
-                  }}/>
-              </StyledChatBoxCards>
-            </div>
-             )
+             return <Blokiran item={item} getBlocked={getBlocked}/>
       break;
-
 
       case "pin":
-             return (             
-              <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType(item.type)}}>
-                   <StyledChatBoxCards>
-                   <Dropdown items={chatDropdown} roomId={item.room_id}/>
-  
-  
-                   </StyledChatBoxCards>
-              </div>)
+             return <Pin item={item} />
       break; 
 
-
       case "grup":
-             return (             
-               <div key={item.room_id} onClick={()=>{setClickedChat(item.room_id);setType("group")}}>
-              <StyledChatBoxCards>
-                   <img src={item.image} />
-                   <div className="name">{item.group_name}</div>
-              </StyledChatBoxCards>
-              </div>)
+             return <Grup item={item}/>
       break;
 
-
       case "undangan":
-             return (              
-             <div key={item.room_id}>
-              <StyledChatBoxCards>
-                  <img src={item.image} />
-                  <div className="name">{item.group_name}</div>
-                  <Button content="Join Group" styling="primary" onPress={async()=>{
-                    try {
-                        await api.put("/group/join",{roomId:item.room_id},{
-                         headers: {'Authorization':`Bearer ${token}`}
-                         })
-
-                         setFilter("grup")
-                    } catch(err) {
-                        console.log(err)
-                    }
-                  }}/>
-              </StyledChatBoxCards>
-            </div>)
+             return <Undangan item={item} getInvitations={getInvitations} />
       break;
         
   
@@ -205,33 +126,9 @@ const Chatbox = ({setClickedChat,setType}) => {
             setProfile(profileImage);
 
         } catch(err) {
-          console.log(err)
+             navigate("/error")
         }
   }
-
-  const getChats = async() => {
-      try { 
-        setLoadingList(true);
-
-           const res = await api.get("/chats",{
-          headers: {'Authorization':`Bearer ${token}`}
-          });
-
-        setLoadingList(false);
-
-          const payload = res.data;
-          const chats = payload.data.chats;
-          let newChats = chats.filter(chat => chat.display_name.toLowerCase().trim().startsWith(search) === true);
-
-          setList(newChats)
-
-
-      } catch (err) {
-       
-         console.log(err);
-
-      }
-  };
 
   const getFriends = async() => {
 
@@ -253,7 +150,7 @@ const Chatbox = ({setClickedChat,setType}) => {
 
  } catch (err) {
   
-    console.log(err);
+     navigate("/error")
 
  }
   };
@@ -277,58 +174,7 @@ const Chatbox = ({setClickedChat,setType}) => {
 
  } catch (err) {
   
-    console.log(err);
-
- }
-  };
-
-  const getPins = async() => {
-    try {
-
-      setLoadingList(true);
-
-      const res = await api.get("/chats?isPinned=true",{
-     headers: {'Authorization':`Bearer ${token}`}
-     });
-
-
-     setLoadingList(false);
-
-     const payload = res.data;
-     const chats = payload.data.chats;
-
-     let newChats = chats.filter(chat => chat.display_name.toLowerCase().trim().startsWith(search) === true);
-
-     setList(newChats)
-
-
- } catch (err) {
-  
-    console.log(err);
-
- }
-  };
-
-  const getGroups = async() => {
-    try {
-      setLoadingList(true);
-
-      const res = await api.get("/groups",{
-     headers: {'Authorization':`Bearer ${token}`}
-     });
-
-     setLoadingList(false);
-
-     const payload = res.data;
-     const groups = payload.data.groups;
-     let newGroups = groups.filter(group => group.group_name.toLowerCase().trim().startsWith(search) === true);
-
-     setList(newGroups)
-
-
- } catch (err) {
-  
-    console.log(err);
+    navigate("/error")
 
  }
   };
@@ -353,7 +199,7 @@ const Chatbox = ({setClickedChat,setType}) => {
 
  } catch (err) {
   
-    console.log(err);
+     navigate("/error")
 
  }
   }; 
@@ -374,11 +220,10 @@ const Chatbox = ({setClickedChat,setType}) => {
 
  } catch (err) {
   
-    console.log(err);
+    navigate("/error")
 
  }
   }
-
              // Form
   const onChange = (e) => {
     setFilter(e.target.value);
@@ -388,7 +233,6 @@ const Chatbox = ({setClickedChat,setType}) => {
   const onSearch = (e) => {
     setSearch(e.target.value)
   }
-
 
         // Toggling
   const toggleAddDrop = () => {
@@ -404,12 +248,13 @@ const Chatbox = ({setClickedChat,setType}) => {
   const toggleSidebar = () => {
     setSidebar(prev => !prev)
   }
-
-
+  
   return (
-    <ChatContext.Provider value={{setProfile,setFilter,getFriends,getGroups}}>
-    <StyledChatBox>
-          <Sidebar closeSidebar={toggleSidebar} sidebar={sidebar} position="left" content={sidebarContent}/>
+    <ChatContext.Provider value={{setProfile,setFilter,setSidebarContent,setNotif,getFriends,getGroups}}>
+       <StyledChatBox>
+          <NotificationModal isShown={notif ? true : false} message={notif} />
+    
+          <Sidebar closeSidebar={toggleSidebar} sidebar={sidebar} position="left" content={sidebarContent} setContent={setSidebarContent}/>
        
           <header>
                 <img src={profile} className="chat-profile" onClick={()=>{toggleSidebar();setSidebarContent("Profil")}}/>
@@ -424,7 +269,6 @@ const Chatbox = ({setClickedChat,setType}) => {
                 </div>
                 
           </header>
-
 
           <section className="sort-section">
                  <div className="search-control">
@@ -449,7 +293,7 @@ const Chatbox = ({setClickedChat,setType}) => {
                  </div>
           </section>
 
-    </StyledChatBox>
+       </StyledChatBox>
     </ChatContext.Provider>
   )
 }

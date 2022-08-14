@@ -226,6 +226,11 @@ const editGroup = async(req,res) => {
 const leaveGroup = async(req,res) => {
 const roomId = req.params.id;
 const userId = req.user.id;
+const name = req.user.name;
+
+if(!roomId){
+    return sendErr("Server error",res)
+};
 
 try {
     //  remove from user_group
@@ -239,6 +244,17 @@ try {
         owner_id : userId,
         room_id : roomId
     }});
+
+    // bot messages
+    await GroupMessage.create({
+        room_id: roomId,
+        sender_id: 17,
+        owner_id : 17,
+        body : `${name} left the group.`,
+        isForwarded : 'false',
+        replying : null,
+        refering : null
+    })
 
     return res.status(201).send({
         status : "Success"
@@ -286,6 +302,15 @@ const sendInvitation = async(req,res) => {
    const userId = req.user.id;
    const roomId = req.body.roomId;
    const friendIds = req.body.friendIds;
+   const name = req.user.name;
+
+   if(friendIds.length === 0){
+    return sendErr("Can't invite 0 people",res)
+   };
+
+   if(!name || !roomId){
+    return sendErr("Server error",res)
+   };
 
 
    try {
@@ -313,6 +338,19 @@ const sendInvitation = async(req,res) => {
            })
 
         });
+
+        // bot messages
+        await GroupMessage.create({
+        room_id: roomId,
+        sender_id: 17,
+        owner_id : 17,
+        body : `${name} invited ${friendIds.length} people`,
+        isForwarded : 'false',
+        replying : null,
+        refering : null
+
+        })
+
         
 
         return res.status(201).send({
@@ -372,7 +410,7 @@ const getNonMembers = async(req,res) => {
     const userId = req.user.id;
     const roomId = req.params.id;
 
-    console.log(roomId)
+    
 
     try {
         // Check the membership
@@ -415,7 +453,12 @@ const getNonMembers = async(req,res) => {
 
 const joinGroup = async(req,res) => {
     const userId = req.user.id;
+    const name = req.user.name;
     const roomId = req.body.roomId;
+
+    if(!name ){
+        return sendErr("Server error",res)
+    };
 
     try {
         const user = await UserGroup.findOne({
@@ -434,6 +477,18 @@ const joinGroup = async(req,res) => {
           status : "Accepted"
         },{where: {user_id:userId,room_id:roomId}})
 
+
+        // bot messages
+        await GroupMessage.create({
+            room_id: roomId,
+            sender_id: 17,
+            owner_id : 17,
+            body : `${name} joined the group`,
+            isForwarded : 'false',
+            replying : null,
+            refering : null
+            })
+
         return res.status(201).send({
             status : "Success"
         })
@@ -449,6 +504,10 @@ const updateRoles = async(req,res) => {
 const userId = req.user.id;
 const roomId = req.body.room_id;
 const friendId = req.params.id;
+
+if(!friendId || !roomId){
+    return sendErr("Server error",res)
+};
 
 try {
 
@@ -499,8 +558,14 @@ return sendErr("Server error",res)
 
 const kickMember = async(req,res) => {
     const userId = req.user.id;
+    const name = req.user.name;
     const roomId = req.query.room;
     const friendId = req.query.id;
+    const friendName = req.query.name;
+
+    if(!friendName || !friendId || !roomId){
+        return sendErr("Server error",res)
+    };
 
     try {
 
@@ -541,6 +606,17 @@ const kickMember = async(req,res) => {
                 owner_id : friendId
             }
         });
+
+        // BOT
+        await GroupMessage.create({
+            room_id: roomId,
+            sender_id: 17,
+            owner_id : 17,
+            body : `${name} kicked ${friendName}`,
+            isForwarded : 'false',
+            replying : null,
+            refering : null
+            })
     
         return res.status(201).send({
             status : "Success"

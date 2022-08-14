@@ -9,6 +9,7 @@ import Main from "./pages/Main";
 import Reset from "./pages/Reset";
 import NewPassword from "./pages/NewPassword";
 import LandingPage from "./pages/LandingPage";
+import Error from "./pages/Error"
 
 
 const queryClient = new QueryClient();
@@ -23,8 +24,6 @@ function App() {
   const[resetToken,setResetToken] = useState(null)
   const token = user ? user.token : null;
   const isAdmin = user ? user.isAdmin : null;
-
- 
 
   useEffect(()=>{
   //  get token first time
@@ -54,6 +53,7 @@ function App() {
             <Route path="/" element={token ? <Main/> : <Navigate to="/landing" /> } />
             <Route path="/reset" element={ resetToken ?   <Navigate to="/newpassword"/> : token ? <Navigate to="/"/> : <Reset />} />
             <Route path="/newpassword" element={resetToken ? <NewPassword/> : token ? <Navigate to="/"/> : <Navigate to="/login"/> } />
+            <Route path="/error" element={<Error />} />
             </Routes>
     </BrowserRouter>
     </QueryClientProvider>
