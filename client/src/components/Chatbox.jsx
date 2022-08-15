@@ -28,7 +28,7 @@ export const ChatContext = createContext(null)
 const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => {
 
   const navigate = useNavigate();
-  const{token}=useContext(AppContext);
+  const{token,socket,user}=useContext(AppContext);
   const{setClickedChat,filter,setFilter,
        getChats,getGroupChats,getGroups,
        getPins,getGroupPins,getBlocked,
@@ -49,10 +49,6 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
   const[notif,setNotif] = useState(false);
 
   // useEffect
-  useEffect(()=>{
-    getImage();
-  },[]);
-
   useLayoutEffect(()=>{
 
     switch(filter){
@@ -88,6 +84,22 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
          getChats()
     }
   },[filter,search])
+
+  useEffect(()=>{
+    if(list.length !== 0 && filter !== "teman" && 
+    filter !== "blokiran" && filter !== "grup" && 
+    filter !== "undangan" ){
+        const roomArray = list.map(item => item.room_id);
+        socket.emit("join_room", {room_ids : roomArray})
+
+        socket.emit("online",{ id : user.user_id});
+        };
+
+       },[list])
+
+  useEffect(()=>{
+    getImage();
+  },[]);
 
   // Functions
             //  Tampilan

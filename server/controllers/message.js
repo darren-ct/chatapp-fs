@@ -21,10 +21,7 @@ const getMessages = async(req,res) => {
         let profileQuery = "";
 
 
-      
         try {
-
-
           if(isGroup !== "true"){
 
             const friend = await UserChat.findOne({
@@ -237,7 +234,7 @@ const sendMessage = async(req,res) => {
         replying:replying,
         refering:newMsg.message_id,
         isForwarded:isForwarded ? isForwarded : "false",
-        isRead:"true"
+        
       });
 
       

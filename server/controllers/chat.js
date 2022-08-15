@@ -34,7 +34,7 @@ const getChats = async(req,res) => {
     
     LEFT JOIN message
     ON message.room_id = chat_room.room_id 
-    AND owner_id <> ${userID} AND sender_id <> ${userID} 
+    AND owner_id = ${userID} AND sender_id <> ${userID} 
     AND sender_id <> 17 AND sender_id <> 16
     AND isRead = 'false' 
 
@@ -86,7 +86,7 @@ const getChats = async(req,res) => {
        
        LEFT JOIN message
        ON message.room_id = chat_room.room_id AND owner_id = ${userID} 
-       AND owner_id <> ${userID} AND sender_id <> ${userID} 
+       AND owner_id = ${userID} AND sender_id <> ${userID} 
        AND sender_id <> 17 AND sender_id <> 16
        AND isRead = 'false' 
    

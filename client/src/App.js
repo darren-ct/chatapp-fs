@@ -20,19 +20,23 @@ const socket = io.connect("http://localhost:5000");
 
 function App() {
   
+  // States
   const[user,setUser] = useState(null);
   const[resetToken,setResetToken] = useState(null)
   const token = user ? user.token : null;
   const isAdmin = user ? user.isAdmin : null;
 
+  // UseEffect
   useEffect(()=>{
-  //  get token first time
+
      const userInfo =  JSON.parse(localStorage.getItem("user"));
 
      if(!userInfo) return;
 
      setUser(userInfo);
-  },[])
+
+  }, [])
+  
 
   useEffect(()=>{
     if(user){
@@ -41,6 +45,8 @@ function App() {
     }
     },[user])
 
+    // Function
+   
 
   return (
     <AppContext.Provider value={{user,setUser,token,isAdmin,resetToken,setResetToken,socket}}>

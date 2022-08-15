@@ -47,6 +47,10 @@ const Profile = sequelize.define("profile", {
         
     }, 
 
+    socket_id : {
+        type : DataTypes.INTEGER
+    }
+
 
 
 },{
