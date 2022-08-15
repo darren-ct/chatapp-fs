@@ -9,6 +9,7 @@ const {sendErr} = require("../helper/other");
 const getChats = async(req,res) => {
     const userID = req.user.id;
     const isPinned = req.query.isPinned;
+    const isGroup = req.query.isGroup;
 
     let queryChat = "";
     let queryGroup = "";
@@ -29,13 +30,20 @@ const getChats = async(req,res) => {
     ON user.user_id = profile.user_id
 
     INNER JOIN user_friend
-    ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID}
+    ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID} AND isBlock = 'false'
     
-    INNER JOIN message
-    ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false' 
+    LEFT JOIN message
+    ON message.room_id = chat_room.room_id 
+    AND owner_id <> ${userID} AND sender_id <> ${userID} 
+    AND sender_id <> 17 AND sender_id <> 16
+    AND isRead = 'false' 
 
-    GROUP BY message.room_id
-    ORDER BY last_time, last_date ,isPinned DESC
+    GROUP BY chat_room.room_id
+    ORDER BY 
+    isPinned DESC,
+    last_date DESC,
+    last_time DESC,
+    user_friend.display_name ASC
     `;
 
      queryGroup = `
@@ -45,14 +53,20 @@ const getChats = async(req,res) => {
     FROM user_group INNER JOIN group_room
     ON user_group.room_id = group_room.room_id AND user_group.user_id = ${userID}
 
-    INNER JOIN group_message
-    ON group_message.room_id = group_room.room_id AND owner_id = ${userID} AND isRead = 'false'
+    LEFT JOIN group_message
+    ON group_message.room_id = group_room.room_id 
+    AND owner_id = ${userID} AND sender_id <> ${userID} 
+    AND sender_id <> 17 AND sender_id <> 16
+    AND isRead = 'false'
 
-    GROUP BY group_message.room_id
-    ORDER BY isPinned, last_time DESC
+    GROUP BY group_room.room_id
+    ORDER BY 
+    isPinned DESC,
+    last_date DESC,
+    last_time DESC,
+    group_name ASC
     `;
 
-   
     } else {
        queryChat = `
        SELECT profile_image, isOnline, user_friend.display_name, user.user_id ,  chat_room.room_id ,COUNT(message.room_id) AS notif , 
@@ -68,15 +82,23 @@ const getChats = async(req,res) => {
        ON user.user_id = profile.user_id
    
        INNER JOIN user_friend
-       ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID}
+       ON profile.user_id = user_friend.friend_id AND user_friend.user_id = ${userID} AND isBlock = 'false'
        
-       INNER JOIN message
-       ON message.room_id = chat_room.room_id AND owner_id = ${userID} AND isRead = 'false' 
+       LEFT JOIN message
+       ON message.room_id = chat_room.room_id AND owner_id = ${userID} 
+       AND owner_id <> ${userID} AND sender_id <> ${userID} 
+       AND sender_id <> 17 AND sender_id <> 16
+       AND isRead = 'false' 
    
-       GROUP BY message.room_id
-       ORDER BY isPinned, last_time DESC
+       GROUP BY chat_room.room_id
+       ORDER BY 
+       isPinned DESC,
+       last_date DESC,
+       last_time DESC,
+       user_friend.display_name ASC
     `;
-    queryGroup = `
+
+       queryGroup = `
     
     SELECT image, group_name , group_room.room_id ,COUNT(group_message.room_id) AS notif,
     TIME(MAX(group_message.createdAt)) AS last_time, DATE(MAX(group_message.createdAt)) AS last_date
@@ -85,27 +107,55 @@ const getChats = async(req,res) => {
     FROM user_group INNER JOIN group_room
     ON user_group.room_id = group_room.room_id AND user_group.user_id = ${userID} AND isPinned='true'
 
-    INNER JOIN group_message
-    ON group_message.room_id = group_room.room_id AND owner_id = ${userID} AND isRead = 'false'
+    LEFT JOIN group_message
+    ON group_message.room_id = group_room.room_id 
+    AND owner_id = ${userID} AND sender_id <> ${userID} 
+    AND sender_id <> 17 AND sender_id <> 16
+    AND isRead = 'false'
 
-    GROUP BY group_message.room_id
-    ORDER BY isPinned, last_time DESC
+    GROUP BY group_room.room_id
+    ORDER BY 
+    isPinned DESC,
+    last_date DESC,
+    last_time DESC,
+    group_name ASC
 
     `;
     }
 
     try {
-        let chats = await sequelize.query(queryChat,{type:QueryTypes.SELECT});
-        let groupChats = await sequelize.query(queryGroup, {type:QueryTypes.SELECT});
-       
-        return res.status(201).send({
+        let chats = [];
+        let groupChats = [];
+        
+
+        
+        if(isGroup !== "true"){
+
+        chats = await sequelize.query(queryChat,{type:QueryTypes.SELECT})
+
+            return res.status(201).send({
             status: "Success",
             data : {
-                chats : chats.map(chat => {return {...chat,type:"single",profile_image : chat.profile_image ? process.env.SERVER_URL + chat.profile_image : null}}),
-                groupChats : groupChats.map(group => {return {...group,type:"group",image : group.image ? process.env.SERVER_URL + group.profile_image : null}}),
+                chats : chats.map(chat => {return {...chat,type:"single",profile_image : chat.profile_image ? process.env.SERVER_URL + chat.profile_image : null}})
+            }
+           });
+
+        } else {
+
+        groupChats = await sequelize.query(queryGroup, {type:QueryTypes.SELECT});
+      
+
+            return res.status(201).send({
+            status: "Success",
+            data : {
+                groupChats : groupChats.map(group => {return {...group,type:"group",image : group.image ? process.env.SERVER_URL + group.image : null}})
                 
             }
-        });
+            });
+
+        };
+       
+        
     
     
      } catch(err) {

@@ -1,6 +1,6 @@
 import { useState,createContext,useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
-
 
 import Messagebox from "../components/Messagebox";
 import Chatbox from "../components/Chatbox";
@@ -12,6 +12,7 @@ import api from "../connection";
 export const MainContext = createContext(null);
 
 const Main = () => {
+  const navigate = useNavigate();
   const { token } = useContext(AppContext);
 
   const[clickedChat, setClickedChat] = useState(null); //room id
@@ -41,10 +42,33 @@ const Main = () => {
 
       setList(newChats)
     } catch (err) {
-       console.log(err);
-
+       navigate("/error")
     }
   };
+
+  const getGroupChats = async() => {
+
+    try { 
+      setLoadingList(true);
+
+      const res = await api.get("/chats?isGroup=true",{
+      headers: {'Authorization':`Bearer ${token}`}
+      });
+
+      setLoadingList(false);
+
+      const payload = res.data;
+      const chats = payload.data.groupChats;
+      let newChats = chats.filter(chat => chat.group_name.toLowerCase().trim().startsWith(search) === true);
+
+      setList(newChats)
+    } catch (err) {
+       navigate("/error")
+      
+    };
+
+
+  }
 
   const getGroups = async() => {
     try {
@@ -65,8 +89,7 @@ const Main = () => {
 
  } catch (err) {
   
-    console.log(err);
-
+     navigate("/error")
  }
   };
 
@@ -89,21 +112,93 @@ const Main = () => {
 
      setList(newChats)
 
+    } catch (err) {
+  
+     navigate("/error")
+
+     }
+  };
+
+  const getGroupPins = async() => {
+    try {
+
+      setLoadingList(true);
+
+      const res = await api.get("/chats?isPinned=true&isGroup=true",{
+     headers: {'Authorization':`Bearer ${token}`}
+     });
+
+
+     setLoadingList(false);
+
+     const payload = res.data;
+     const chats = payload.data.groupChats;
+
+     let newChats = chats.filter(chat => chat.group_name.toLowerCase().trim().startsWith(search) === true);
+
+     setList(newChats)
+
 
  } catch (err) {
   
-    console.log(err);
+     navigate("/error")
+
+ }
+  };
+
+  const getBlocked = async() => {
+    try {
+      setLoadingList(true);
+
+      const res = await api.get("/friends?isBlock=true",{
+     headers: {'Authorization':`Bearer ${token}`}
+     });
+
+     setLoadingList(false)
+
+     const payload = res.data;
+     const friends = payload.data.friends;
+     let newFriends = friends.filter(friend => friend.display_name.toLowerCase().trim().startsWith(search) === true);
+     
+
+     setList(newFriends);
+
+ } catch (err) {
+  
+    navigate("/error")
+
+ }
+  };
+  
+  const getFriends = async() => {
+
+    try {
+      setLoadingList(true);
+
+      const res = await api.get("/friends",{
+     headers: {'Authorization':`Bearer ${token}`}
+     });
+
+     setLoadingList(false)
+
+     const payload = res.data;
+     const friends = payload.data.friends;
+     let newFriends = friends.filter(friend => friend.display_name.toLowerCase().trim().startsWith(search) === true);
+     
+
+     setList(newFriends);
+
+ } catch (err) {
+  
+     navigate("/error")
 
  }
   };
   
   return (
-  <MainContext.Provider value={{type,setType,clickedChat,setClickedChat,getChats,getGroups,getPins,setFilter,filter}}>
+  <MainContext.Provider value={{type,setType,clickedChat,setClickedChat,setFilter,filter,getChats,getGroupChats,getGroups,getPins,getGroupPins,getBlocked,getFriends}}>
       <StyledMain>
-                <Chatbox 
-                list={list} setList={setList} filter={filter} setFilter={setFilter}
-                loadingList={loadingList} setLoadingList={setLoadingList} 
-                search={search} setSearch={setSearch} getChats={getChats} getGroups={getGroups} getPins={getPins}/>
+                <Chatbox list={list} setList={setList} loadingList={loadingList} setLoadingList={setLoadingList} search={search} setSearch={setSearch} />
                 <Messagebox />
      </StyledMain>
   </MainContext.Provider>

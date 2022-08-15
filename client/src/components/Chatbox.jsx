@@ -25,10 +25,14 @@ import NotificationModal from "./modals/NotificationModal";
 
 export const ChatContext = createContext(null)
 
-const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filter,setFilter,getChats,getGroups,getPins}) => {
+const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => {
+
   const navigate = useNavigate();
   const{token}=useContext(AppContext);
-  const{setClickedChat} = useContext(MainContext);
+  const{setClickedChat,filter,setFilter,
+       getChats,getGroupChats,getGroups,
+       getPins,getGroupPins,getBlocked,
+       getFriends} = useContext(MainContext);
 
   // States
           // Header
@@ -44,7 +48,6 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filte
         // Modals
   const[notif,setNotif] = useState(false);
 
-
   // useEffect
   useEffect(()=>{
     getImage();
@@ -55,22 +58,29 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filte
     switch(filter){
 
     case "pesan":
-           getChats()
+           getChats();
     break;
     case "teman":
-           getFriends()
+           getFriends();
     break; 
     case "blokiran":
-           getBlocked()
+           getBlocked();
     break;
     case "pin":
-           getPins()
+           getPins();
     break; 
+    case "pesan grup":
+          getGroupChats();
+    break;
     case "grup":
-           getGroups()
+           getGroups();
     break;
     case "undangan":
            getInvitations()
+    break;
+
+    case "Pesan grup terpin":
+           getGroupPins()
     break;
       
 
@@ -104,6 +114,14 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filte
              return <Grup item={item}/>
       break;
 
+      case "pesan grup" :
+          return  <Pesan item={item} />
+      break;
+
+      case "Pesan grup terpin" :
+          return  <Pin item={item} />
+      break;
+
       case "undangan":
              return <Undangan item={item} getInvitations={getInvitations} />
       break;
@@ -130,55 +148,6 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filte
         }
   }
 
-  const getFriends = async() => {
-
-    try {
-      setLoadingList(true);
-
-      const res = await api.get("/friends",{
-     headers: {'Authorization':`Bearer ${token}`}
-     });
-
-     setLoadingList(false)
-
-     const payload = res.data;
-     const friends = payload.data.friends;
-     let newFriends = friends.filter(friend => friend.display_name.toLowerCase().trim().startsWith(search) === true);
-     
-
-     setList(newFriends);
-
- } catch (err) {
-  
-     navigate("/error")
-
- }
-  };
-
-  const getBlocked = async() => {
-    try {
-      setLoadingList(true);
-
-      const res = await api.get("/friends?isBlock=true",{
-     headers: {'Authorization':`Bearer ${token}`}
-     });
-
-     setLoadingList(false)
-
-     const payload = res.data;
-     const friends = payload.data.friends;
-     let newFriends = friends.filter(friend => friend.display_name.toLowerCase().trim().startsWith(search) === true);
-     
-
-     setList(newFriends);
-
- } catch (err) {
-  
-    navigate("/error")
-
- }
-  };
-
   const getInvitations = async() => {
     try {
       setLoadingList(true);
@@ -203,7 +172,7 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filte
 
  }
   }; 
-              // Start Chat
+             // Start Chat
   const startChat = async(friendId) => {
     try {
       
@@ -250,7 +219,7 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filte
   }
   
   return (
-    <ChatContext.Provider value={{setProfile,setFilter,setSidebarContent,setNotif,getFriends,getGroups}}>
+    <ChatContext.Provider value={{setProfile,setSidebarContent,setNotif,getFriends}}>
        <StyledChatBox>
           <NotificationModal isShown={notif ? true : false} message={notif} />
     
@@ -280,8 +249,10 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch,filte
                      <option value="teman">Teman saya</option>
                      <option value="blokiran">Blokiran saya</option>
                      <option value="pin">Yang saya pin</option>
+                     <option value="pesan grup">Pesan Grup saya</option>
                      <option value="grup">Grup saya</option>
                      <option value="undangan">Undangan saya</option>
+                     <option value="Pesan grup terpin">Pesan Grup terpin saya</option>
                  </select>
           </section>
 

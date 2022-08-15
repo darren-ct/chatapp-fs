@@ -79,7 +79,7 @@ export const StyledChatBox = styled.div`
             color: #6c5ce7;;
             border-color:transparent;
             background-color: transparent;
-            width: 140px;
+            width: 200px;
             cursor: pointer;
 
             select{

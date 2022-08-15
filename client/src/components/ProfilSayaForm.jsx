@@ -21,15 +21,14 @@ const schema = yup.object().shape({
   });
 
 
-const ProfilSayaForm = ({preset,setErrMsg,setSuccessMsg,getMyProfile}) => {
+const ProfilSayaForm = ({preset,setErrMsg,setSuccessMsg}) => {
        const{token} = useContext(AppContext);
        const{setProfile} = useContext(ChatContext)
 
-       const {register, handleSubmit,formState:{errors},reset} = useForm({
+       const {register, handleSubmit,formState:{errors}} = useForm({
         resolver: yupResolver(schema),
         defaultValues: {...preset,birth:preset.birth.slice(0,10)}
        });
-
 
       const[image,setImage] = useState(preset.image);
       const[form,setForm] = useState({image:{value:null}});

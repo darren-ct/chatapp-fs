@@ -21,7 +21,7 @@ const schema = yup.object().shape({
 
 const ProfilTemanForm = ({preset,setErrMsg,setSuccessMsg,id}) => {
        const{token} = useContext(AppContext);
-       const{getChats,setFilter} = useContext(MainContext)
+       const{getChats,getPins,getFriends,filter} = useContext(MainContext);
        const{setProfile} = useContext(MessageContext)
 
        const {register, handleSubmit,formState:{errors}} = useForm({
@@ -46,11 +46,17 @@ const ProfilTemanForm = ({preset,setErrMsg,setSuccessMsg,id}) => {
       
         setSuccessMsg("Profile changed!");
 
-        getChats()
-        setFilter("pesan");
+        //Render
+        if(filter === "pesan"){
+          getChats()
+        } else if(filter === "pin") {
+          getPins()
+        } else if (filter === "teman") {
+          getFriends()
+        };
         
        } catch (err) {
-        console.log(err)
+        
         const payload = err.response.data;
         const message = payload.message;
         setErrMsg(message)

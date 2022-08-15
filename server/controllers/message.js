@@ -159,13 +159,10 @@ const sendMessage = async(req,res) => {
       const userId = req.user.id;
       const {isGroup,roomId,message,replying,isForwarded} = req.body;
 
-      
       try {
 
-       
       if(isGroup !== "true"){
-      
-
+    
         // find friend id
           const friend = await UserChat.findOne({
             where : {room_id:roomId,user_id:userId},
@@ -182,7 +179,6 @@ const sendMessage = async(req,res) => {
         if(isConnected.length === 0){
           return sendErr("Unauthorized",res)
         }
-
 
         // check opposition
         const connected = await UserChat.findAll({
@@ -230,6 +226,7 @@ const sendMessage = async(req,res) => {
         body :  message ,
         replying:replying,
         isForwarded:isForwarded ? isForwarded : "false",
+        
       });
 
       await Message.create({
@@ -239,7 +236,8 @@ const sendMessage = async(req,res) => {
         body :  message ,
         replying:replying,
         refering:newMsg.message_id,
-        isForwarded:isForwarded ? isForwarded : "false"
+        isForwarded:isForwarded ? isForwarded : "false",
+        isRead:"true"
       });
 
       
@@ -287,7 +285,8 @@ const sendMessage = async(req,res) => {
             owner_id : userId,
             body :  message ,
             replying:replying,
-            isForwarded:isForwarded ? isForwarded : "false"
+            isForwarded:isForwarded ? isForwarded : "false",
+            isRead : 'true'
           });
 
         //   Loop it
@@ -332,8 +331,6 @@ const sendMessage = async(req,res) => {
 const deleteMessage = async(req,res) => {
   const userId = req.user.id;
   const {isGroup,messageId} = req.query; 
-
-  console.log(req.query);
 
   try {
 

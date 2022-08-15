@@ -1,4 +1,5 @@
 import { useState,useContext, useEffect} from "react"
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
 import { ChatContext } from "./Chatbox";
 
@@ -10,9 +11,11 @@ import success from "../assets/successful.svg";
 import api from "../connection";
 
 const ProfilSaya = ({closeSidebar,successMsg,setSuccessMsg}) => {
+            const navigate = useNavigate();
             const{token} = useContext(AppContext);
             const{setSidebarContent} = useContext(ChatContext);
  
+            // States
             const [preset,setPreset] = useState("");
 
             // Dynamic states
@@ -24,31 +27,25 @@ const ProfilSaya = ({closeSidebar,successMsg,setSuccessMsg}) => {
                  getMyProfile();
             },[])
             
-
             // Function
             const getMyProfile = async() => {
 
                 try {
                 
-                setProfileLoader(true);
+                 setProfileLoader(true);
 
-                const res = await api.get("/myprofile",{
+                 const res = await api.get("/myprofile",{
                     headers: {'Authorization':`Bearer ${token}`}
                     });
 
-                setProfileLoader(false)
+                 setProfileLoader(false)
          
                  const payload = res.data;
                  const profile = payload.data.profile;
-
-
                  setPreset(profile)
                  
                 } catch(err) {
-                    const payload = err.response.data;
-                    const message = payload.message;
-
-                    setErrMsg(message)
+                 navigate("/error")
                 }
             };
 
@@ -58,7 +55,6 @@ const ProfilSaya = ({closeSidebar,successMsg,setSuccessMsg}) => {
                 closeSidebar();
             };
 
-            
            //  if success
              if(successMsg){
                       return (
@@ -78,8 +74,7 @@ const ProfilSaya = ({closeSidebar,successMsg,setSuccessMsg}) => {
                             </div>
                              )
                     };
-            
-            
+               
          return (
              <>
                 <ErrorModal isShown={errMsg ? true : false} message={errMsg} />

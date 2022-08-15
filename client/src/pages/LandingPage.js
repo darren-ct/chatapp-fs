@@ -1,6 +1,8 @@
 import {useNavigate} from "react-router-dom";
-import StyledLanding from "../core-ui/pages/LandingPage.style";
+
 import Button from "../components/basic/Button";
+
+import StyledLanding from "../core-ui/pages/LandingPage.style";
 
 import mainImage from "../assets/LandingPage.svg";
 import leftCircles from "../assets/left-top.svg";

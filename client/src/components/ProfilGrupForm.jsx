@@ -1,5 +1,7 @@
 import {useState,useContext, useEffect} from "react";
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
+import { MainContext } from "../pages/Main";
 import { MessageContext } from "./Messagebox";
 
 import Input from "./basic/Input";
@@ -13,7 +15,7 @@ import api from "../connection";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { MainContext } from "../pages/Main";
+
 
 const schema = yup.object().shape({
   name : yup.string().min(3).required("Name is required"),
@@ -22,8 +24,9 @@ const schema = yup.object().shape({
 
 
 const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
+  const navigate = useNavigate();
   const {token,user} = useContext(AppContext);
-  const {getChats,setFilter} = useContext(MainContext);
+  const {getGroups,getGroupChats,getGroupPins,filter} = useContext(MainContext);
   const {getMessages} = useContext(MessageContext);
   
   const {register, handleSubmit,formState:{errors}} = useForm({
@@ -127,11 +130,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
        setFriends(newNonMembers);
 
       } catch(err) {
-        console.log(err)
-          const payload = err.response.data;
-          const message = payload.message;
-
-          setErrMsg(message)
+        navigate("/error")
       }
   };
 
@@ -159,11 +158,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
        setMembers(newMembers);
 
       } catch(err) {
-          console.log(err)
-          const payload = err.response.data;
-          const message = payload.message;
-
-          setErrMsg(message)
+          navigate("/error")
       }
   };
 
@@ -187,17 +182,24 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
       headers: {'Authorization':`Bearer ${token}`}
       });
 
+      setUploadLoader(false);
+
+      // Rerender
+      if(filter === "grup"){
+        getGroups()
+      } else if (filter === "pesan grup") {
+        getGroupChats()
+      } else if (filter === "Pesan grup terpin") {
+        getGroupPins()
+      };
 
       getMessages();
-      getChats();
-      setFilter("pesan");
-
+      
       setUploadLoader(false);
       setSuccessMsg("Group profile changed!");
-
-
+      
     } catch(err) {
-     console.log(err)
+       navigate("/error")
     }
 
     
@@ -220,7 +222,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
          
 
     } catch(err) {
-      console.log(err)
+      navigate("/error")
     }
   };
 
@@ -238,20 +240,16 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
       await api.post(`/invitation`,{
         roomId : id,
         friendIds : inviteIds,
-
-      },{
-       headers: {'Authorization':`Bearer ${token}`}
-      });
+      },{ headers: {'Authorization':`Bearer ${token}`} });
 
       setUploadLoader(false);
 
       setSuccessMsg("Friend Invited");
       getMessages();
       
-
- } catch(err) {
-   console.log(err)
- }
+       } catch(err) {
+      navigate("/error")
+      };
   }
 
   // Render
@@ -314,7 +312,6 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
         </div>
          )
 }
-
 
 return (
 <>

@@ -1,5 +1,7 @@
 import { useState,useContext, useEffect} from "react"
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
+import Main, { MainContext } from "../pages/Main";
 import { ChatContext } from "./Chatbox";
 
 import ErrorModal from "./modals/ErrorModal";
@@ -24,8 +26,10 @@ const schema = yup.object().shape({
   });
 
 const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
+    const navigate = useNavigate()
     const{token} = useContext(AppContext);
-    const{getGroups,setFilter,setSidebarContent} = useContext(ChatContext);
+    const {getGroups,getGroupChats,filter} = useContext(MainContext);
+    const{setSidebarContent} = useContext(ChatContext);
     const {register, handleSubmit,formState:{errors},reset} = useForm({
         resolver: yupResolver(schema)
       });
@@ -81,7 +85,7 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
  
        } catch (err) {
         
-          console.log(err);
+          navigate("/error");
  
        }
     }
@@ -169,8 +173,13 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
        
         setUploadLoader(false);
         setSuccessMsg("Group created!");
-        getGroups();
-        setFilter("grup")
+        
+        // Rerender
+        if(filter === "grup"){
+          getGroups()
+        } else if (filter === "pesan grup") {
+          getGroupChats()
+        };
 
 
        } catch (err) {

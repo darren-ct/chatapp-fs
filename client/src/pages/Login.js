@@ -1,23 +1,23 @@
 import {useNavigate} from "react-router-dom";
 import { useState } from "react";
 
-
-import api from "../connection";
-import StyledLogin from "../core-ui/pages/Login.style";
-import StyledFormBody from "../core-ui/FormBody.style";
 import Button from "../components/basic/Button";
 import Input from "../components/basic/Input";
 import ErrorModal from "../components/modals/ErrorModal";
 
+import StyledLogin from "../core-ui/pages/Login.style";
+import StyledFormBody from "../core-ui/FormBody.style";
+
 import mainImage from "../assets/AuthPage.svg";
 import leftCircles from "../assets/left-top.svg";
 import rightCircles from "../assets/right-bottom.svg";
+import api from "../connection";
 
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
 
-const schema = yup .object().shape({
+const schema = yup.object().shape({
   email : yup.string().email().required("Email is required"),
   password :  yup.string().min(8).required("Password is required")
 })
@@ -44,7 +44,7 @@ const Login = ({setUser}) => {
      setUser(user);
    
    } catch(err){
-     console.log(err)
+     
      const payload = err.response.data;
      const message = payload.message;
      setErr(message)

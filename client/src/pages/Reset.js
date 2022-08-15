@@ -1,21 +1,18 @@
-import {useNavigate} from "react-router-dom";
 import { useEffect, useContext, useState } from "react";
 import { AppContext } from "../App";
-import api from "../connection";
 
-
-// import api from "../connection";
-import StyledReset from "../core-ui/pages/Reset.style";
-import StyledFormBody from "../core-ui/FormBody.style";
 import Button from "../components/basic/Button";
 import Input from "../components/basic/Input";
-
 import ErrorModal from "../components/modals/ErrorModal";
 import NotificationModal from "../components/modals/NotificationModal";
+
+import StyledReset from "../core-ui/pages/Reset.style";
+import StyledFormBody from "../core-ui/FormBody.style";
 
 import mainImage from "../assets/ResetPage.svg";
 import leftCircles from "../assets/left-top.svg";
 import rightCircles from "../assets/right-bottom.svg";
+import api from "../connection";
 
 import  {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";

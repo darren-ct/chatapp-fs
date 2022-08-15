@@ -10,11 +10,11 @@ export const StyledChatBoxCards = styled.div`
 
     cursor: pointer;
 
-    border: 1px solid rgba(108,92,231,.2);
+    border: ${(props)=> props.isMe ? "2px solid rgba(108,92,231,.8)" : "1px solid rgba(108,92,231,.1)"};
     transition: 150ms ease;
 
     &:hover{
-        border: 1px solid rgba(108,92,231,.6);
+        border: 1px solid rgba(108,92,231,.8);
     };
 
     .status-dot{

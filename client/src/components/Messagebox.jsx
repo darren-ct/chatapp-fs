@@ -26,8 +26,8 @@ export const MessageContext = createContext(null);
 
 const Messagebox = () => {
   const{token} = useContext(AppContext);
-  const {setFilter,clickedChat,type,getChats} = useContext(MainContext);
-  const navigate = useNavigate()
+  const {filter,clickedChat,type,getChats,getGroupChats,getPins,getGroupPins} = useContext(MainContext);
+  const navigate = useNavigate();
 
   // STATES
       // Drops 
@@ -158,10 +158,21 @@ const Messagebox = () => {
           headers: {'Authorization':`Bearer ${token}`}
            });
 
+          //  Rerender
           getMessages();
-          getChats();
+          
+          if(isGroup && filter === "pesan grup"){
+              getGroupChats()
+          } else if (isGroup && filter === "Pesan grup terpin"){
+              getGroupPins()
+          } else if (!isGroup && filter === "pesan") {
+              getChats()
+          } else if (!isGroup && filter === "pin") {
+              getPins()
+          };
+
           setMsgForm("");
-          setFilter("pesan")
+          
        
          } catch(err) {
           

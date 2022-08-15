@@ -59,7 +59,7 @@ return ( <StyledMessage isMe={isMe}>
                   </div>
 
                   <div className="message-info">
-                    { isMe && <img src={message.isRead === "true" ? read : sent} className="check-icon"/>}
+                    { type === "single" && isMe ? <img src={message.isRead === "true" ? read : sent} className="check-icon"/> : ""}
                   </div>
               </div>
         </StyledMessage> )

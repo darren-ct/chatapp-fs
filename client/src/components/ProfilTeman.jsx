@@ -1,4 +1,5 @@
 import { useState,useContext,useLayoutEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
 import { MessageContext } from "./Messagebox";
 
@@ -10,8 +11,8 @@ import success from "../assets/successful.svg";
 
 import api from "../connection";
 
-
 const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
+    const navigate = useNavigate();
     const{token} = useContext(AppContext);
     const{setSidebarContent} = useContext(MessageContext)
 
@@ -46,10 +47,7 @@ const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
              setPreset(profile)
              
             } catch(err) {
-                const payload = err.response.data;
-                const message = payload.message;
-
-                setErrMsg(message)
+               navigate("/error")
             }
         };
 
@@ -69,7 +67,6 @@ const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
                  </div>
               )
      };
-
      // if loading
     if(profileLoader){
       return (
@@ -78,8 +75,6 @@ const ProfilTeman = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
               </div>
                )
       };
-
-    
 
   return (
     <>

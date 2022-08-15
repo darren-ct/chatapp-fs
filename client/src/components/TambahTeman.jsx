@@ -1,5 +1,7 @@
 import { useState,useEffect,useContext} from "react"
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
+import { MainContext } from "../pages/Main";
 import { ChatContext } from "./Chatbox";
 
 import {TailSpin} from "react-loader-spinner"
@@ -13,8 +15,10 @@ import api from "../connection";
 
 
 const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
+    const navigate = useNavigate();
     const{token} = useContext(AppContext);
-    const{getFriends,setFilter,setSidebarContent} = useContext(ChatContext);
+    const {filter} = useContext(MainContext)
+    const{getFriends,setSidebarContent} = useContext(ChatContext);
 
     // States
     const[search,setSearch] = useState("")
@@ -32,25 +36,23 @@ const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
     const addFriend = async(id) => {
         try {
 
-            setUploadLoader(true);
+           setUploadLoader(true);
 
-           await api.post("/friend", {
-              friendId : id
-           },
-           {
-           headers: {'Authorization':`Bearer ${token}`}
-           }
+           await api.post("/friend", {friendId : id},
+           { headers: {'Authorization':`Bearer ${token}`} }
            )
  
            setUploadLoader(false)
+           setSuccessMsg("Friend Added");
 
-           setSuccessMsg("Friend Added")
-           getFriends();
-           setFilter("teman")
- 
+           // Rerender
+           if(filter === "teman"){
+              getFriends();
+           };
+          
        } catch (err) {
         
-          console.log(err);
+          navigate("/error");
  
        }
     }
@@ -73,7 +75,7 @@ const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
  
        } catch (err) {
         
-          console.log(err);
+          navigate("/error")
  
        }
     };
@@ -117,13 +119,13 @@ const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
       };
           
           // if loading
-      if(uploadLoader){
+    if(uploadLoader){
         return (
           <div className="dynamic">
                 <TailSpin height = "64" width = "64" radius = "9" color = '#6C5CE7' ariaLabel = 'three-dots-loading'  wrapperStyle wrapperClass />
           </div>
         )
-      }
+      };
 
   return (
     <>

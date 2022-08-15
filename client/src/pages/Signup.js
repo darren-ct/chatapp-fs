@@ -1,19 +1,18 @@
 import {useNavigate} from "react-router-dom";
 import { useState } from "react";
 
-
-import api from "../connection";
-import StyledRegister from "../core-ui/pages/Register.style";
-import StyledFormBody from "../core-ui/FormBody.style";
 import Button from "../components/basic/Button";
 import Input from "../components/basic/Input";
-
 import ErrorModal from "../components/modals/ErrorModal";
 import NotificationModal from "../components/modals/NotificationModal";
+
+import StyledRegister from "../core-ui/pages/Register.style";
+import StyledFormBody from "../core-ui/FormBody.style";
 
 import mainImage from "../assets/AuthPage.svg";
 import leftCircles from "../assets/left-top.svg";
 import rightCircles from "../assets/right-bottom.svg";
+import api from "../connection";
 
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -43,7 +42,7 @@ const Signup = ({setUser}) => {
 })
 
   const [email,setEmail] = useState(null);
-  const [timer,setTimer] = useState(60)
+  const [timer,setTimer] = useState(60);
   const [err,setErr] = useState(null);
   const [notification,setNotification] = useState(null);
 

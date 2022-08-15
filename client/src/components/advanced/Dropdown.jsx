@@ -12,7 +12,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
 
    const navigate = useNavigate();
    const{token,setUser} = useContext(AppContext);
-   const{type,setClickedChat,clickedChat,getChats,getPins,setFilter,filter} = useContext(MainContext);
+   const{type,setClickedChat,clickedChat,getChats,getGroupChats,getPins,getGroupPins,getGroups,getBlocked,filter} = useContext(MainContext);
 
   // Function
   const clickHandler = (content,isSidebar,e) => {
@@ -94,7 +94,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
       setNotif("Message deleted");
       setTimeout(()=>{ setNotif(null)},3000);
       getMessages();
-      
+      // getChats / getPins / getGroupChats / getGroupPins
   
     } catch(err) {
         navigate("/error");
@@ -109,6 +109,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
       });
 
      getMessages();
+     // getChats / getPins / getGroupChats / getGroupPins
 
      setNotif("Message unsent");
      setTimeout(()=>{ setNotif(null)},3000);
@@ -132,8 +133,21 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
            });
 
            getMessages();
-           getChats();
-           setFilter("pesan");
+
+          //  Rerender
+           if(filter === "pesan"){ 
+            getChats() 
+          }
+           else if(filter === "pesan grup") { 
+            getGroupChats() 
+          } 
+           else if(filter === "pin") {
+            getPins()
+          } 
+           else if(filter === "Pesan grup terpin") {
+             getGroupPins()
+          }
+            
 
            setNotif("Messages cleared");
            setTimeout(()=>{ setNotif(null)},3000);
@@ -152,7 +166,15 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
           headers: {'Authorization':`Bearer ${token}`}
           });
 
-          getChats();
+          // Rerender
+          if(filter === "pesan grup"){
+            getGroupChats();
+          } else if(filter === "pesan") {
+            getChats();
+          };
+
+
+         
           setNotif("Chat pinned");
           setTimeout(()=>{ setNotif(null)},3000);
       
@@ -165,15 +187,19 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
        const isGroup = friendId ? "false" : "true";
 
        try {
-          
         await api.put(`/chat/unpin/${roomId}`,{ isGroup },{
         headers: {'Authorization':`Bearer ${token}`}
         });
 
+      // Rerender
         if(filter === "pesan"){
           getChats()
-        } else {
+        } else if(filter === "pin") {
           getPins()
+        } else if ( filter === "Pesan grup terpin") {
+          getGroupPins()
+        } else if(filter === "pesan grup") {
+          getGroupChats()
         };
 
         setNotif("Chat unpinned");
@@ -196,8 +222,17 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
           });
 
           setClickedChat(null);
-          getChats();
-          setFilter("pesan");
+
+          // Rerender
+           if(filter === "pesan grup") { 
+            getGroupChats() 
+          } 
+           else if(filter === "Pesan grup terpin") {
+             getGroupPins()
+          } 
+            else if(filter === "grup") {
+            getGroups()
+          }
 
           setNotif("Group Left");
           setTimeout(()=>{ setNotif(null)},3000);
@@ -218,17 +253,23 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
               }); 
 
               getFriends()
-
           } else {
+              await api.put(`/block?roomId=${clickedChat}`, {} ,{
+              headers: {'Authorization':`Bearer ${token}`}
+              }); 
+                  
+              setClickedChat(null);
 
-          await api.put(`/block?roomId=${clickedChat}`, {} ,{
-          headers: {'Authorization':`Bearer ${token}`}
-          }); 
-        
-          setFilter("pesan");
-          getChats();
-          setClickedChat(null);
-        };
+               // Rerender
+               if(filter === "pesan"){
+               getChats()
+               } else if(filter === "pin") {
+               getPins()
+               } else if(filter === "blokiran") {
+               getBlocked()
+               }
+
+           };
 
         setNotif("Friend blocked");
         setTimeout(()=>{ setNotif(null)},3000);

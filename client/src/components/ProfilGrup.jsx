@@ -1,4 +1,5 @@
 import { useState,useContext,useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
 import { MessageContext } from "./Messagebox";
 
@@ -10,6 +11,7 @@ import success from "../assets/successful.svg";
 import api from "../connection";
 
 const ProfilGrup = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
+  const navigate = useNavigate();
   const {token} = useContext(AppContext);
   const {setSidebarContent} = useContext(MessageContext)
 
@@ -46,10 +48,7 @@ const ProfilGrup = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
        setRole(role);
        
       } catch(err) {
-          const payload = err.response.data;
-          const message = payload.message;
-
-          setErrMsg(message)
+       navigate("/error")
       }
   };
 
@@ -60,7 +59,7 @@ const ProfilGrup = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
   }
 
     //  if success
-    if(successMsg){
+  if(successMsg){
       return (
            <div className="dynamic">
                <img src={success}/>
@@ -69,7 +68,6 @@ const ProfilGrup = ({closeSidebar,successMsg,setSuccessMsg,id}) => {
                </div>
             )
    };
-
    // if loading
   if(profileLoader){
     return (
