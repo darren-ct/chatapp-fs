@@ -1,4 +1,4 @@
-import { useState,createContext,useContext,useEffect } from "react";
+import { useState,createContext,useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
 
@@ -42,6 +42,7 @@ const Main = () => {
 
       setList(newChats)
     } catch (err) {
+      console.log(err)
        navigate("/error")
     }
   };
@@ -63,6 +64,7 @@ const Main = () => {
 
       setList(newChats)
     } catch (err) {
+      console.log(err)
        navigate("/error")
       
     };
@@ -89,6 +91,7 @@ const Main = () => {
 
  } catch (err) {
   
+     console.log(err)
      navigate("/error")
  }
   };
@@ -114,6 +117,7 @@ const Main = () => {
 
     } catch (err) {
   
+      console.log(err)
      navigate("/error")
 
      }
@@ -141,6 +145,7 @@ const Main = () => {
 
  } catch (err) {
   
+     console.log(err)
      navigate("/error")
 
  }
@@ -165,6 +170,7 @@ const Main = () => {
 
  } catch (err) {
   
+    console.log(err)
     navigate("/error")
 
  }
@@ -190,6 +196,7 @@ const Main = () => {
 
  } catch (err) {
   
+     console.log(err)
      navigate("/error")
 
  }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext,useRef,createContext } from "react";
+import { useEffect, useState, useContext,useRef,createContext,useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { AppContext } from "../App";
@@ -25,7 +25,7 @@ import {friendDropdown,groupDropdown} from "../helpers/variables"
 export const MessageContext = createContext(null);
 
 const Messagebox = () => {
-  const{token} = useContext(AppContext);
+  const{token,socket,user} = useContext(AppContext);
   const {filter,clickedChat,type,getChats,getGroupChats,getPins,getGroupPins} = useContext(MainContext);
   const navigate = useNavigate();
 
@@ -60,6 +60,12 @@ const Messagebox = () => {
 
     if(clickedChat){
         getMessages();
+
+        socket.emit("read_message",{
+          room_id: clickedChat,
+          user_id :user.user_id,
+          isGroup : type === "single" ? "false" : "true"
+      });
     };
 
     setOtherDrop(false);
@@ -69,8 +75,103 @@ const Messagebox = () => {
   },[clickedChat])
 
   useEffect(()=>{
-    scrollToBottom()
+    if(messages){
+        scrollToBottom();
+    }
   },[messages])
+
+  useLayoutEffect(()=>{
+
+    if(clickedChat){
+      // when online 
+    socket.on("user_online", (data)=>{
+
+      if(type === "single"){
+          // getProfile
+      }
+
+    });
+      // message sent
+     socket.on("message_sent",(data)=>{
+
+        getMessages();
+
+      if(type === "group" && filter === "pesan grup"){
+          getGroupChats()
+      } else if (type === "group" && filter === "Pesan grup terpin"){
+          getGroupPins()
+      } else if (type !== "group" && filter === "pesan") {
+          getChats()
+      } else if (type !== "group" && filter === "pin") {
+          getPins()
+      };
+
+     });
+
+     // message unsent
+     socket.on("message_unsent",(data)=>{
+        getMessages();
+
+        if(data.id == user.user_id){
+        setNotif("Message unsent");
+        setTimeout(()=>{ setNotif(null)},3000);
+        // getChats / getPins / getGroupChats / getGroupPins 
+        };
+
+
+     });
+
+      // message read
+      socket.on("message_read",(data)=>{
+            const isMe = user.user_id === data.id ? true : false;
+            
+            if(!isMe && type === "single"){
+                console.log("MASUK CUYY")
+                return getMessages();
+            };
+        
+             if(isMe && type === "group" && filter === "pesan grup"){
+            getGroupChats()
+            } else if (isMe && type === "group" && filter === "Pesan grup terpin"){
+            getGroupPins()
+            } else if (isMe && type !== "group" && filter === "pesan") {
+            getChats();
+            } else if (isMe && type !== "group" && filter === "pin") {
+            getPins();
+          };
+
+      })
+
+      if(type !== "single"){
+             socket.on("group_left",(data)=>{
+
+               if(Number(user.user_id) !== Number(data.id)){
+                  getMessages()
+               };
+                 
+             });
+
+             socket.on("group_joined",(data)=>{
+
+                 if(Number(user.user_id) !== Number(data.id)){
+                  getMessages()
+               };
+
+            });
+
+            socket.on("member_kicked",(data)=>{
+                 if(Number(user.user_id) !== Number(data.id) && Number(user.user_id) !== Number(data.kicker)){
+                 getMessages()
+                 } else if(Number(user.user_id) === Number(data.id)) {
+                 socket.emit("leave_room",{room_id:clickedChat})
+                 };
+            });
+
+        }
+
+    };
+
+  },[clickedChat])
 
   // FUNCTIONS
 
@@ -139,6 +240,7 @@ const Messagebox = () => {
        
          } catch(err) {
            
+          console.log(err)
           navigate("/error")
 
           }
@@ -159,23 +261,11 @@ const Messagebox = () => {
            });
 
           //  Rerender
-          getMessages();
-          
-          if(isGroup && filter === "pesan grup"){
-              getGroupChats()
-          } else if (isGroup && filter === "Pesan grup terpin"){
-              getGroupPins()
-          } else if (!isGroup && filter === "pesan") {
-              getChats()
-          } else if (!isGroup && filter === "pin") {
-              getPins()
-          };
-
+          socket.emit("send_message",{room_id:clickedChat})
           setMsgForm("");
           
-       
          } catch(err) {
-          
+          console.log(err)
           navigate("/error")
           }
 

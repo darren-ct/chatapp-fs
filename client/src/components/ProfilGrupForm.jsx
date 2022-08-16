@@ -25,8 +25,8 @@ const schema = yup.object().shape({
 
 const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
   const navigate = useNavigate();
-  const {token,user} = useContext(AppContext);
-  const {getGroups,getGroupChats,getGroupPins,filter} = useContext(MainContext);
+  const {token,user,socket} = useContext(AppContext);
+  const {getGroups,getGroupChats,getGroupPins,filter,clickedChat} = useContext(MainContext);
   const {getMessages} = useContext(MessageContext);
   
   const {register, handleSubmit,formState:{errors}} = useForm({
@@ -130,6 +130,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
        setFriends(newNonMembers);
 
       } catch(err) {
+        console.log(err)
         navigate("/error")
       }
   };
@@ -158,6 +159,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
        setMembers(newMembers);
 
       } catch(err) {
+          console.log(err)
           navigate("/error")
       }
   };
@@ -199,6 +201,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
       setSuccessMsg("Group profile changed!");
       
     } catch(err) {
+      console.log(err)
        navigate("/error")
     }
 
@@ -215,6 +218,8 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
           headers: {'Authorization':`Bearer ${token}`}
          });
 
+         socket.emit("kick_member", {room_id:clickedChat,user_id:friendId,kicker:user.user_id})
+
          setUploadLoader(false);
 
          setSuccessMsg("Member kicked");
@@ -222,6 +227,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
          
 
     } catch(err) {
+      console.log(err)
       navigate("/error")
     }
   };
@@ -248,6 +254,7 @@ const ProfilGrupForm = ({preset,setErrMsg,setSuccessMsg,role,id}) => {
       getMessages();
       
        } catch(err) {
+      console.log(err)
       navigate("/error")
       };
   }

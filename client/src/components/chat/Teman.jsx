@@ -8,6 +8,7 @@ import {StyledChatBoxCards} from "../../core-ui/ChatBoxCards.style"
 
 import { friendsDropdown } from "../../helpers/variables";
 
+
 const Teman = ({item,startChat,getFriends}) => {
     const {setType} = useContext(MainContext);
     const {setNotif} = useContext(ChatContext);

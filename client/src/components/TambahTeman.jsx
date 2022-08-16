@@ -89,8 +89,7 @@ const TambahTeman = ({successMsg,setSuccessMsg,closeSidebar}) => {
                                <div className="left-text">
                                      <div className="left-title">{user.username}</div>
                                      <div className="left-buttons">
-                                         { !user.connection && <Button styling="secondary" content="JADIKAN TEMAN" onPress={()=>{addFriend(user.user_id)}}/> }
-                                          <Button styling="primary" content="KIRIM PESAN"/>
+                                         { !user.connection ? <Button styling="secondary" content="JADIKAN TEMAN" onPress={()=>{addFriend(user.user_id)}}/> : <p>SUDAH TEMAN</p> }
                                      </div>
                                </div>
                            </div>

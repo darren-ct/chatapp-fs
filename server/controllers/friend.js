@@ -1,15 +1,20 @@
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/connect');
-const {sendErr} = require("../helper/other");
+
 const Profile = require('../models/Profile');
 const UserChat = require('../models/UserChat');
 const UserFriend = require("../models/UserFriend");
+
+const {sendErr} = require("../helper/other");
+
 
 const getUsers = async(req,res) => {
     const userId = req.user.id;
 
     const query = `
-    SELECT user.user_id ,user.username, profile.sahabat_id, profile_image , user_friend.user_id AS connection
+    SELECT user.user_id, user.username, 
+    profile.sahabat_id, profile_image, 
+    user_friend.user_id AS connection
 
     FROM user INNER JOIN profile
     ON user.user_id = profile.user_id AND user.user_id <> ${userId}
@@ -19,7 +24,7 @@ const getUsers = async(req,res) => {
     AND user_friend.user_id = ${userId}
 
     ORDER BY user.username ASC
-    `;
+    `
 
     try {
 
@@ -33,7 +38,6 @@ const getUsers = async(req,res) => {
         });
 
     } catch(err) {
-        console.log(err)
         sendErr("Server error",res)
     }
 
@@ -44,24 +48,27 @@ const getFriends = async(req,res) => {
  const isBlock = req.query.isBlock ;
  let query = null;
 
- if(!isBlock || isBlock === "false"){
-   query = `
-      SELECT friend_id , profile_image , user_friend.display_name , isBlock
+   if(!isBlock || isBlock === "false"){
+      query = 
+      `
+      SELECT friend_id, user_friend.display_name, profile_image, isBlock
 
       FROM user_friend INNER JOIN profile
       ON profile.user_id = user_friend.friend_id 
       AND user_friend.user_id = ${userId}
       ORDER BY user_friend.display_name ASC
        ` 
-   } else {
-   query = `
-      SELECT friend_id , profile_image , user_friend.display_name 
+     } else {
+      query = 
+      `
+      SELECT friend_id, user_friend.display_name, profile_image 
+
       FROM user_friend INNER JOIN profile
       ON profile.user_id = user_friend.friend_id 
       AND user_friend.user_id = ${userId} AND isBlock = 'true'
       ORDER BY user_friend.display_name ASC
        `
- };
+     };
 
  try {
     const friends = await sequelize.query(query,{type:QueryTypes.SELECT});
@@ -70,51 +77,46 @@ const getFriends = async(req,res) => {
         status: "Success",
         data : {
             friends : friends.map(friend => {return{
-                ...friend,profile_image : friend.profile_image ? process.env.SERVER_URL + friend.profile_image : null
+                ...friend, profile_image : friend.profile_image ? process.env.SERVER_URL + friend.profile_image : null
             }})
         }
     });
 
-
- } catch(err) {
-    console.log(err)
+   } catch(err) {
     sendErr("Server error", res)
- }
+   }
 
 
-};
+}
 
 const addFriend = async(req,res) => {
 const userId = req.user.id;
 const {friendId} = req.body;
 
 try {
-  const friend = await Profile.findOne({where : {
+    const friend = await Profile.findOne({where : {
      user_id : friendId
-  },attributes : ["display_name"]});
+    },attributes : ["display_name"]});
 
-  if(!friend) {
-    return sendErr("No user use that id",res)
-  }
+    if(!friend) return sendErr("No user use that id", res)
+  
+    await UserFriend.create({
+         user_id : userId,
+         friend_id : friendId,
+         isBlock : "false",
+         display_name : friend.display_name
+        })
 
-  await UserFriend.create({
-    user_id : userId,
-    friend_id : friendId,
-    isBlock : "false",
-    display_name : friend.display_name
-  })
+    return res.status(201).send({
+        status : "Success"
+    })
 
-  return res.status(201).send({
-    status : "Success"
-  })
+    } catch(err) {
 
-}catch(err){
-
-    console.log(err);
-   return sendErr("Server error",res)
+    sendErr("Server error",res)
 };
 
-};
+}
 
 const changeDisplay = async(req,res) => {
     const userId = req.user.id;
@@ -129,7 +131,8 @@ const changeDisplay = async(req,res) => {
         });
 
         const query = `
-        SELECT profile_image , isOnline ,user_friend.display_name
+        SELECT user_friend.display_name, profile_image, isOnline
+
         FROM profile INNER JOIN user_friend
         ON profile.user_id = user_friend.friend_id 
         AND user_friend.friend_id = ${friendId}
@@ -140,7 +143,7 @@ const changeDisplay = async(req,res) => {
 
         return res.status(201).send({
            status : "Success",
-           data : {
+           data   : {
             profile : profile.map(item => {return {...item,profile_image : item.profile_image ? 
                 process.env.SERVER_URL + item.profile_image : null }})[0]
            }
@@ -148,10 +151,9 @@ const changeDisplay = async(req,res) => {
         })
 
     } catch(err) {
-        console.log(err)
-        return sendErr("Server error",res)
+        sendErr("Server error",res)
     }
-};
+}
 
 const blockFriend = async(req,res) => {
     const userId = req.user.id;
@@ -162,42 +164,42 @@ const blockFriend = async(req,res) => {
          
         if(!friendId){
 
-        const friend = await UserChat.findOne({
+            const friend = await UserChat.findOne({
             where : {
                 user_id : userId,
                 room_id : roomId
             },
             attributes : ["friend_id"]
-        });
+            })
 
-        await UserFriend.update({
+            await UserFriend.update({
             isBlock : "true"
         },{
-            where : {user_id : userId,friend_id:friend.friend_id}
-        }); 
+            where : {user_id : userId, friend_id : friend.friend_id}
+            })
     
         } else {
+
             await UserFriend.update({
                 isBlock : "true"
             },{
                 where : {user_id : userId,friend_id:friendId}
-            }); 
-        }
+            })
+
+        };
 
         return res.status(201).send({
             status : "Success"
          })
 
     } catch(err) {
-        console.log(err)
-        return sendErr("Server error",res)
+         sendErr("Server error",res)
     }
 };
 
 const unblockFriend = async(req,res) => {
     const userId = req.user.id;
     const friendId = req.params.id;
-
 
         try {
             await UserFriend.update({
@@ -211,35 +213,9 @@ const unblockFriend = async(req,res) => {
              })
     
         } catch(err) {
-            return sendErr("Server error",res)
+            sendErr("Server error",res)
         }
    
 };
 
-const getBirthdays = async(req,res) => {
-
-    const userId = req.user.id;
-
-    try {
-    const query = `
-    SELECT friend_id , profile_image , user_friend.display_name , birth_date
-    FROM user_friend INNER JOIN profile
-    ON profile.user_id = user_friend.friend_id 
-    AND user_friend.user_id = ${userId}`;  // pikirkan logic spy ambil yg recent 3 days // PAKE DATE DIFF 
-
-    const birthdays = await sequelize.query(query,{type:QueryTypes.SELECT});
-
-    return res.status(201).send({
-        status : "Success",
-        birthdays : birthdays
-     })
-
-   } catch(err) {
-
-    return sendErr("Server error",res)
-   }
-
-
-};
-
-module.exports = {getBirthdays,getUsers,getFriends,addFriend,changeDisplay,blockFriend,unblockFriend}
+module.exports = {getUsers,getFriends,addFriend,changeDisplay,blockFriend,unblockFriend};

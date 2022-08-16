@@ -29,7 +29,7 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
 
   const navigate = useNavigate();
   const{token,socket,user}=useContext(AppContext);
-  const{setClickedChat,filter,setFilter,
+  const{clickedChat,setClickedChat,filter,setFilter,
        getChats,getGroupChats,getGroups,
        getPins,getGroupPins,getBlocked,
        getFriends} = useContext(MainContext);
@@ -91,11 +91,39 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
     filter !== "undangan" ){
         const roomArray = list.map(item => item.room_id);
         socket.emit("join_room", {room_ids : roomArray})
-
-        socket.emit("online",{ id : user.user_id});
         };
 
        },[list])
+
+  useEffect(()=>{
+       socket.emit("online",{ id : user.user_id});
+   },[]);
+
+  useEffect(()=>{
+      
+    socket.on("user_online",(data)=>{
+       switch(filter){
+              case "pesan":
+               getChats()
+              break;
+                       
+              case "pin":
+               getPins()
+              break;
+
+              case "pesan grup":
+               getGroupChats()
+              break;
+
+              case "Pesan grup terpin":
+               getGroupPins()
+              break;
+
+              default:
+              }
+           })
+              
+  },[])
 
   useEffect(()=>{
     getImage();
@@ -156,6 +184,7 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
             setProfile(profileImage);
 
         } catch(err) {
+             console.log(err)
              navigate("/error")
         }
   }
@@ -180,6 +209,7 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
 
  } catch (err) {
   
+     console.log(err)
      navigate("/error")
 
  }
@@ -197,10 +227,12 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
      const roomId = payload.id;
   
      setClickedChat(roomId);
+     socket.emit("join_chat",{room_id:clickedChat})
 
 
  } catch (err) {
   
+    console.log(err)  
     navigate("/error")
 
  }

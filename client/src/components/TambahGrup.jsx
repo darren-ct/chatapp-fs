@@ -152,8 +152,6 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
        })
        const formData = new FormData();
 
-
-
        formData.append("image",form.image.value);
        formData.append("name",data.name);
        formData.append("description",data.description);
@@ -170,7 +168,6 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
           headers: {'Authorization':`Bearer ${token}`}
           });
 
-       
         setUploadLoader(false);
         setSuccessMsg("Group created!");
         
@@ -180,16 +177,11 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
         } else if (filter === "pesan grup") {
           getGroupChats()
         };
-
-
        } catch (err) {
-
-        
         const payload = err.response.data;
         const message = payload.message;
 
         setErrMsg(message)
-  
        }
 
     };
@@ -222,8 +214,6 @@ const TambahGrup = ({closeSidebar,successMsg,setSuccessMsg}) => {
         </div>
       )
     }
-
-   
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../App";
 import { MainContext} from "../../pages/Main"
@@ -11,8 +11,9 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
                   getFriends,getMessages,setNotif}) => {
 
    const navigate = useNavigate();
-   const{token,setUser} = useContext(AppContext);
+   const{token,setUser,user,socket} = useContext(AppContext);
    const{type,setClickedChat,clickedChat,getChats,getGroupChats,getPins,getGroupPins,getGroups,getBlocked,filter} = useContext(MainContext);
+
 
   // Function
   const clickHandler = (content,isSidebar,e) => {
@@ -97,6 +98,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
       // getChats / getPins / getGroupChats / getGroupPins
   
     } catch(err) {
+        console.log(err)
         navigate("/error");
      }
   };
@@ -108,13 +110,13 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
      headers: {'Authorization':`Bearer ${token}`}
       });
 
-     getMessages();
-     // getChats / getPins / getGroupChats / getGroupPins
+      socket.emit("unsend_message",{
+          room_id : clickedChat,
+          user_id : user.user_id
+      });
 
-     setNotif("Message unsent");
-     setTimeout(()=>{ setNotif(null)},3000);
-  
     } catch(err) {
+      console.log(err)
       navigate("/error");
     }
   };
@@ -153,7 +155,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
            setTimeout(()=>{ setNotif(null)},3000);
        
          } catch(err) {
-           
+           console.log(err)
            navigate("/error");
           }
   };
@@ -179,6 +181,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
           setTimeout(()=>{ setNotif(null)},3000);
       
         } catch(err) {
+          console.log(err)
           navigate("/error");
          }
   };
@@ -207,6 +210,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
     
       } catch(err) {
       
+        console.log(err)
         navigate("/error");
 
        }
@@ -221,6 +225,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
           headers: {'Authorization':`Bearer ${token}`}
           });
 
+          socket.emit("leave_group",{room_id:clickedChat,user_id:user.user_id});
           setClickedChat(null);
 
           // Rerender
@@ -239,6 +244,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
          
         } catch(err) {
         
+          console.log(err)
           navigate("/error");
 
          }
@@ -275,6 +281,7 @@ const Dropdown = ({items,toggleSidebar,setSidebarContent,
         setTimeout(()=>{ setNotif(null)},3000);
 
         } catch(err) {
+          console.log(err)
           navigate("/error");
          }
   };

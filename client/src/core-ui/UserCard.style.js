@@ -47,6 +47,11 @@ export const StyledUserCard = styled.div`
             button{
                margin-right: 10px ;
                font-size: 12px;
+            };
+
+            p{
+               font-size: 12px;
+               color : #3C2CB4;
             }
 
          }

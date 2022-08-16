@@ -1,17 +1,15 @@
+const Joi = require('joi');
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/connect');
+const fs = require('fs');
+const path = require("path"); 
+
 const Profile = require("../models/Profile");
 const UserChat = require("../models/UserChat");
-const Joi = require('joi');
+const UserFriend = require("../models/UserFriend");
 
 const {sendErr} = require("../helper/other")
 
-const fs = require('fs');
-const path = require("path"); 
-const UserFriend = require("../models/UserFriend");
-
-
-require("dotenv").config();
 
 const getProfile = async(req,res) => {
     const MyId = req.user.id
@@ -28,7 +26,7 @@ const getProfile = async(req,res) => {
 
         if(!myFriend){
             return sendErr("Friend not found")
-        }
+        };
 
         const myFriendId = myFriend.friend_id;
 
@@ -65,8 +63,7 @@ const getProfile = async(req,res) => {
             }
         })
     } catch(err) {
-        console.log(err)
-        return sendErr("Server error",res)
+         sendErr("Server error",res)
     }
 
 };
@@ -77,7 +74,7 @@ const getMyProfile = async(req,res) => {
 
     try {
 
-        // if profile only
+        // if image only
         if(profileOnly){
 
             const profile = await Profile.findOne({
@@ -87,10 +84,6 @@ const getMyProfile = async(req,res) => {
                 attributes : ["profile_image"]
             });
 
-            if(!profile){
-                return sendErr("Profile not found", res)
-            };
-
             return res.status(201).send({
                 status : "Success",
                 data : {
@@ -98,23 +91,21 @@ const getMyProfile = async(req,res) => {
                         image : profile.profile_image ? process.env.SERVER_URL + profile.profile_image : null,
                     }
                 }
-            })
+            });
+
+
 
         };
 
-
-        // if not profile
+        // if not image only
         const profile = await Profile.findOne({
             where : {
                 user_id : userId
+            },
+            attributes : {
+                exclude : ['socket_id','isOnline']
             }
         });
-
-        if(!profile){
-            return sendErr("Profile not found", res)
-        };
-
-
 
         return res.status(201).send({
             status : "Success",
@@ -129,9 +120,10 @@ const getMyProfile = async(req,res) => {
                     last_online : profile.last_online
                 }
             }
-        })
+        });
+
     } catch(err) {
-        return sendErr("Server error",err)
+        sendErr("Server error",res)
     }
 };
 
@@ -140,23 +132,18 @@ const editMyProfile = async(req,res) => {
     const{name,number,caption,birth} = req.body;
 
     try {
-
         // Check format
         if(number && Number(number) === NaN){
             return sendErr("Phone must be a number",res)
         };
+
         const schema = Joi.object({
-            name: Joi.string()
-                .min(3)
-                .required(),
-        
-            number: Joi.string().min(8),
-        
-            caption: Joi.string().min(8),
-        
-            birth: Joi.string().min(10)
-        
+            name: Joi.string().min(3).required(),
+            number: Joi.string().min(8).required(),
+            caption: Joi.string().min(8).required(),
+            birth: Joi.string().min(10).required()
         });
+
         await schema.validateAsync(req.body);
 
         // UPDATE
@@ -186,23 +173,23 @@ const editMyProfile = async(req,res) => {
                    fs.unlink(path.join(__dirname,"..","uploads",oldProfile.profile_image),(err)=>{console.log(err)});
                 };
 
-                      } else {
+            } else {
 
               await Profile.update({
-                display_name : name,
-                number : number,
-                caption : caption,
-                birth_date : birth,
-              },{
-               where : {
-                    user_id : userId
+                    display_name : name,
+                    number : number,
+                    caption : caption,
+                    birth_date : birth,
+                },{
+                  where : {
+                     user_id : userId
                  }
               });
 
             }
 
 
-        // GET IMAGE
+         // GET IMAGE
         const newProfile = await Profile.findOne({
             where : {
                 user_id : userId
@@ -218,7 +205,6 @@ const editMyProfile = async(req,res) => {
         });
 
     } catch(err) {
-        console.log(err);
         sendErr("Server Error", res);
     }
 }
@@ -232,9 +218,7 @@ const editProfile = async(req,res) => {
 
         // Joi
         const schema = Joi.object({
-            name: Joi.string()
-                .min(3)
-                .required(),
+            name: Joi.string().min(3).required(),
         });
         await schema.validateAsync(req.body);
 
@@ -263,6 +247,7 @@ const editProfile = async(req,res) => {
 
         const query = `
         SELECT profile_image , isOnline ,user_friend.display_name
+
         FROM profile INNER JOIN user_friend
         ON profile.user_id = user_friend.friend_id 
         AND user_friend.friend_id = ${myFriendId}
@@ -280,18 +265,8 @@ const editProfile = async(req,res) => {
 
         })
 
-        // 
-        return res.status(201).send({
-            status: "Success",
-        })
-
-
-
     } catch (err) {
-
         sendErr("Server Error",res)
-        console.log(err);
-
     }
 }
 
