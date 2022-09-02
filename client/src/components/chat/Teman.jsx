@@ -1,5 +1,4 @@
 import { useContext,useState } from "react";
-import { MainContext } from "../../pages/Main"; 
 import { ChatContext } from "../Chatbox";
 
 import Dropdown from "../advanced/Dropdown";
@@ -10,7 +9,6 @@ import { friendsDropdown } from "../../helpers/variables";
 
 
 const Teman = ({item,startChat,getFriends}) => {
-    const {setType} = useContext(MainContext);
     const {setNotif} = useContext(ChatContext);
 
      const [showDrop,setShowDrop] = useState(false);
@@ -19,7 +17,6 @@ const Teman = ({item,startChat,getFriends}) => {
     const clickHandler = (e) => {
       if(e.type === "click"){
         startChat(item.friend_id);
-        setType("single")
       } else {
         e.preventDefault();
         setShowDrop(prev => !prev)

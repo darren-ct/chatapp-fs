@@ -30,6 +30,7 @@ const Main = () => {
     try { 
       setLoadingList(true);
 
+      console.log("minta chat")
       const res = await api.get("/chats",{
       headers: {'Authorization':`Bearer ${token}`}
       });

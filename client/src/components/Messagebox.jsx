@@ -61,11 +61,11 @@ const Messagebox = () => {
     if(clickedChat){
         getMessages();
 
-        socket.emit("read_message",{
-          room_id: clickedChat,
-          user_id :user.user_id,
-          isGroup : type === "single" ? "false" : "true"
-      });
+      //   socket.emit("read_message",{
+      //     room_id: clickedChat,
+      //     user_id :user.user_id,
+      //     isGroup : type === "single" ? "false" : "true"
+      // });
     };
 
     setOtherDrop(false);
@@ -84,13 +84,13 @@ const Messagebox = () => {
 
     if(clickedChat){
       // when online 
-    socket.on("user_online", (data)=>{
+    // socket.on("user_online", (data)=>{
 
-      if(type === "single"){
-          // getProfile
-      }
+    //   if(type === "single"){
+    //       // getProfile
+    //   }
 
-    });
+    // });
       // message sent
      socket.on("message_sent",(data)=>{
 
@@ -109,65 +109,65 @@ const Messagebox = () => {
      });
 
      // message unsent
-     socket.on("message_unsent",(data)=>{
-        getMessages();
+    //  socket.on("message_unsent",(data)=>{
+    //     getMessages();
 
-        if(data.id == user.user_id){
-        setNotif("Message unsent");
-        setTimeout(()=>{ setNotif(null)},3000);
-        // getChats / getPins / getGroupChats / getGroupPins 
-        };
+    //     if(data.id == user.user_id){
+    //     setNotif("Message unsent");
+    //     setTimeout(()=>{ setNotif(null)},3000);
+    //     // getChats / getPins / getGroupChats / getGroupPins 
+    //     };
 
 
-     });
+    //  });
 
       // message read
-      socket.on("message_read",(data)=>{
-            const isMe = user.user_id === data.id ? true : false;
+      // socket.on("message_read",(data)=>{
+      //       const isMe = user.user_id === data.id ? true : false;
             
-            if(!isMe && type === "single"){
-                console.log("MASUK CUYY")
-                return getMessages();
-            };
+      //       if(!isMe && type === "single"){
+      //           console.log("MASUK CUYY")
+      //           return getMessages();
+      //       };
         
-             if(isMe && type === "group" && filter === "pesan grup"){
-            getGroupChats()
-            } else if (isMe && type === "group" && filter === "Pesan grup terpin"){
-            getGroupPins()
-            } else if (isMe && type !== "group" && filter === "pesan") {
-            getChats();
-            } else if (isMe && type !== "group" && filter === "pin") {
-            getPins();
-          };
+      //        if(isMe && type === "group" && filter === "pesan grup"){
+      //       getGroupChats()
+      //       } else if (isMe && type === "group" && filter === "Pesan grup terpin"){
+      //       getGroupPins()
+      //       } else if (isMe && type !== "group" && filter === "pesan") {
+      //       getChats();
+      //       } else if (isMe && type !== "group" && filter === "pin") {
+      //       getPins();
+      //     };
 
-      })
+      // })
 
-      if(type !== "single"){
-             socket.on("group_left",(data)=>{
+      // if(type !== "single"){
+      //        socket.on("group_left",(data)=>{
 
-               if(Number(user.user_id) !== Number(data.id)){
-                  getMessages()
-               };
+      //          if(Number(user.user_id) !== Number(data.id)){
+      //             getMessages()
+      //          };
                  
-             });
+      //        });
 
-             socket.on("group_joined",(data)=>{
+      //        socket.on("group_joined",(data)=>{
 
-                 if(Number(user.user_id) !== Number(data.id)){
-                  getMessages()
-               };
+      //            if(Number(user.user_id) !== Number(data.id)){
+      //             getMessages()
+      //          };
 
-            });
+      //       });
 
-            socket.on("member_kicked",(data)=>{
-                 if(Number(user.user_id) !== Number(data.id) && Number(user.user_id) !== Number(data.kicker)){
-                 getMessages()
-                 } else if(Number(user.user_id) === Number(data.id)) {
-                 socket.emit("leave_room",{room_id:clickedChat})
-                 };
-            });
+      //       socket.on("member_kicked",(data)=>{
+      //            if(Number(user.user_id) !== Number(data.id) && Number(user.user_id) !== Number(data.kicker)){
+      //            getMessages()
+      //            } else if(Number(user.user_id) === Number(data.id)) {
+      //            socket.emit("leave_room",{room_id:clickedChat})
+      //            };
+      //       });
 
-        }
+      //   }
 
     };
 
@@ -215,6 +215,7 @@ const Messagebox = () => {
 
      // message related
   const getMessages = async() => {
+    console.log("Minta messages")
 
     let isGroup = "";
     if(type === "group" ) {

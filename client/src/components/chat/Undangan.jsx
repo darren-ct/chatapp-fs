@@ -25,7 +25,7 @@ const Undangan = ({item,getInvitations}) => {
        headers: {'Authorization':`Bearer ${token}`}
        });
 
-       socket.emit("join_group",{room_id:clickedChat,user_id:user.user_id})
+       socket.emit("join_group",{room_id:item.room_id,user_id:user.user_id})
 
        getInvitations();
        setNotif("Group joined");

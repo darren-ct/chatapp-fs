@@ -28,8 +28,8 @@ export const ChatContext = createContext(null)
 const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => {
 
   const navigate = useNavigate();
-  const{token,socket,user}=useContext(AppContext);
-  const{clickedChat,setClickedChat,filter,setFilter,
+  const{token,socket}=useContext(AppContext);
+  const{setClickedChat,setType,filter,setFilter,
        getChats,getGroupChats,getGroups,
        getPins,getGroupPins,getBlocked,
        getFriends} = useContext(MainContext);
@@ -79,7 +79,6 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
            getGroupPins()
     break;
       
-
     default:
          getChats()
     }
@@ -87,43 +86,42 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
 
   useEffect(()=>{
     if(list.length !== 0 && filter !== "teman" && 
-    filter !== "blokiran" && filter !== "grup" && 
-    filter !== "undangan" ){
+    filter !== "blokiran" && filter !== "undangan" ){
         const roomArray = list.map(item => item.room_id);
         socket.emit("join_room", {room_ids : roomArray})
         };
 
        },[list])
 
-  useEffect(()=>{
-       socket.emit("online",{ id : user.user_id});
-   },[]);
+//   useEffect(()=>{
+//        socket.emit("online",{ id : user.user_id});
+//    },[]);
 
-  useEffect(()=>{
+//   useEffect(()=>{
       
-    socket.on("user_online",(data)=>{
-       switch(filter){
-              case "pesan":
-               getChats()
-              break;
+//     socket.on("user_online",(data)=>{
+//        switch(filter){
+//               case "pesan":
+//                getChats()
+//               break;
                        
-              case "pin":
-               getPins()
-              break;
+//               case "pin":
+//                getPins()
+//               break;
 
-              case "pesan grup":
-               getGroupChats()
-              break;
+//               case "pesan grup":
+//                getGroupChats()
+//               break;
 
-              case "Pesan grup terpin":
-               getGroupPins()
-              break;
+//               case "Pesan grup terpin":
+//                getGroupPins()
+//               break;
 
-              default:
-              }
-           })
+//               default:
+//               }
+//            })
               
-  },[])
+//   },[])
 
   useEffect(()=>{
     getImage();
@@ -227,9 +225,10 @@ const Chatbox = ({list,setList,loadingList,setLoadingList,search,setSearch}) => 
      const roomId = payload.id;
   
      setClickedChat(roomId);
-     socket.emit("join_chat",{room_id:clickedChat})
-
-
+     setType("single");
+     setFilter("pesan");
+     getChats();
+    
  } catch (err) {
   
     console.log(err)  

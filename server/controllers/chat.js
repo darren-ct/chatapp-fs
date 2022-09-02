@@ -182,7 +182,6 @@ try {
         attributes : ["room_id"]
        });
 
-
        if(alreadyRoomed.length === 2){
 
          return res.status(201).send({
@@ -225,6 +224,7 @@ try {
 
 } catch(err) {
 
+    console.log(err);
     return sendErr("Server error",res)
 
 };

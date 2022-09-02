@@ -124,7 +124,7 @@ io.on("connection", (socket)=> {
         socket.on("join_group",(data)=>{
             const room = data.room_id;
             const id = data.user_id;
-    
+
             socket.join(room);
     
             io.in(room).emit("group_joined", {status : "Group joined",id} )
@@ -173,132 +173,6 @@ io.on("connection", (socket)=> {
                })
             });
 
-    });
-
-    // Jika join lewat group
-    socket.on("join_chat",(data)=>{
-        const room = data.room_id;
-        socket.join(room);
-
-         // when online
-        socket.on("online", async(data)=>{
-             await Profile.update({
-                 isOnline : "true",
-                 last_online : null,
-                 socket_id : socket.id
-            },{where : {user_id:data.id}});
-
-            io.in(room).emit("user_online", {id:data.id})
-        
-          });
-
-        //  when send & unsend message & read message
-        socket.on("send_message",(data)=>{
-            const room = data.room_id;
-    
-            io.in(room).emit("message_sent", {
-                status : "Message sent"
-            })
-        });
-    
-        socket.on("unsend_message",(data)=>{
-            const room = data.room_id;
-            const id = data.user_id;
-    
-            io.in(room).emit("message_unsent", {
-                status : "Message unsent",
-                id
-               
-            })
-        });
-    
-        socket.on("read_message", async(data)=>{
-            const room = data.room_id;
-            const id = data.user_id;
-            const isGroup = data.isGroup === "true" ? true : false;
-    
-            if(isGroup){
-                await GroupMessage.update({isRead : "true"},{
-                    where : {
-                        owner_id : id,
-                        room_id : room
-                    }
-                });
-            } else {
-    
-                await Message.update({isRead : "true"},{
-                    where : {
-                        owner_id : id,
-                        room_id : room
-                    }
-                });
-    
-            }
-    
-            io.in(room).emit("message_read", {
-                status : "Message read",
-                id : id
-            });
-        });
-    
-            //  when leave , join , kick 
-        socket.on("leave_group",(data)=>{
-            const room = data.room_id;
-            const id = data.user_id;
-    
-            io.in(room).emit("group_left", {status : "Group left",id} )
-            socket.leave(room);
-    
-        });
-    
-        socket.on("join_group",(data)=>{
-            const room = data.room_id;
-            const id = data.user_id;
-    
-            socket.join(room);
-    
-            io.in(room).emit("group_joined", {status : "Group joined",id} )
-        });
-    
-        socket.on("kick_member", (data)=>{
-    
-            const room = data.room_id;
-            const id = data.user_id;
-            const kicker = data.kicker
-            
-            io.in(room).emit("member_kicked", {status : "Member kicked!",id:id,kicker : kicker})
-        })
-
-        // lanjutan habis dikick untuk korban
-         socket.on("leave_room",(data)=>{
-                const room = data.room_id;
-                socket.leave(room)
-         })
-
-         // when edit our profile / group profile
-         socket.on("edit_group",(data)=>{
-            const room = data.room_id;
-            const id = data.user_id;
-            
-            io.in(room).emit("group_edited", {room_id:room,id:id})
-        })
-
-          socket.on("edit_profile",(data)=>{
-                const id = data.user_id;
-
-                io.in(room).emit("profile_edited", {id:id})
-           })
-
-         // when offline
-         socket.on("disconnect", async()=>{
-               await Profile.update({
-                  isOnline : "false",
-                  last_online : new Date()
-             },{where : {socket_id:socket.id}});
-
-            io.in(room).emit("user_offline", {id:data.id})
-       
-           });
     });
     
 })
